@@ -1,0 +1,58 @@
+import type { Post } from '@/types/post.types'
+
+export const mockPosts: Post[] = [
+  {
+    id: '1',
+    channelId: '1',
+    content: '🚀 Новый релиз Vue 3.5 — что изменилось?\n\nВ этом обновлении команда Vue представила реактивные пропсы, улучшенный SSR и новые хуки жизненного цикла.\n\n#vue #frontend #release',
+    status: 'published',
+    publishedAt: '2026-03-20T12:00:00Z',
+    createdAt: '2026-03-20T11:00:00Z',
+    updatedAt: '2026-03-20T12:00:00Z',
+  },
+  {
+    id: '2',
+    channelId: '1',
+    content: '💡 5 паттернов TypeScript, которые должен знать каждый разработчик\n\nDiscriminated Unions, Template Literal Types, Conditional Types и другие продвинутые техники.\n\n#typescript #tips',
+    status: 'published',
+    publishedAt: '2026-03-18T09:00:00Z',
+    createdAt: '2026-03-18T08:30:00Z',
+    updatedAt: '2026-03-18T09:00:00Z',
+  },
+  {
+    id: '3',
+    channelId: '2',
+    content: 'Как увеличить конверсию лендинга в 2 раза без бюджета на рекламу?\n\nРазбираем 7 проверенных стратегий, которые работают в 2026 году.',
+    status: 'draft',
+    publishedAt: null,
+    createdAt: '2026-03-22T15:00:00Z',
+    updatedAt: '2026-03-22T15:00:00Z',
+  },
+  {
+    id: '4',
+    channelId: '2',
+    content: 'Email-маркетинг мёртв? Нет — если вы делаете это правильно.\n\nРассказываю, почему email по-прежнему даёт лучший ROI среди всех каналов.',
+    status: 'draft',
+    publishedAt: null,
+    createdAt: '2026-03-23T10:00:00Z',
+    updatedAt: '2026-03-23T10:00:00Z',
+  },
+  {
+    id: '5',
+    channelId: '1',
+    content: '📅 Обзор лучших IDE для веб-разработки в 2026 году\n\nСравниваем VS Code, WebStorm, Zed и Cursor.',
+    status: 'scheduled',
+    publishedAt: null,
+    createdAt: '2026-03-24T08:00:00Z',
+    updatedAt: '2026-03-24T08:00:00Z',
+  },
+  {
+    id: '6',
+    channelId: '3',
+    content: 'Тестовый пост для личного блога — что-то пошло не так при публикации.',
+    status: 'failed',
+    publishedAt: null,
+    createdAt: '2026-03-19T16:00:00Z',
+    updatedAt: '2026-03-19T16:05:00Z',
+  },
+]

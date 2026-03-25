@@ -1,0 +1,26 @@
+:root {
+  /* Telegram theme fallbacks */
+  --tg-theme-bg-color: #ffffff;
+  --tg-theme-text-color: #000000;
+  --tg-theme-hint-color: #999999;
+  --tg-theme-link-color: #2481cc;
+  --tg-theme-button-color: #2481cc;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-secondary-bg-color: #f0f0f0;
+
+  /* App variables */
+  --fp-radius: 12px;
+  --fp-radius-sm: 8px;
+  --fp-spacing: 16px;
+  --fp-spacing-sm: 8px;
+  --fp-spacing-xs: 4px;
+  --fp-transition: 0.2s ease;
+  --fp-max-width: 480px;
+  --fp-bottom-nav-height: 60px;
+
+  /* Status colors */
+  --fp-success: #34c759;
+  --fp-error: #ff3b30;
+  --fp-warning: #ff9500;
+  --fp-info: #007aff;
+}
