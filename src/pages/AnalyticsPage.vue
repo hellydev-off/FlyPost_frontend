@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
 import { useChannelsStore } from '@/stores/useChannelsStore'
+import { usePlanStore } from '@/stores/usePlanStore'
 import { analyticsApi } from '@/api/analytics.api'
 import type { ChannelStats, SubscriberHistory, SubscriberPoint } from '@/types/analytics.types'
 import StatsCard from '@/components/analytics/StatsCard.vue'
@@ -11,12 +12,14 @@ import AppIcon from '@/components/common/AppIcon.vue'
 import HealthScoreCard from '@/components/analytics/HealthScoreCard.vue'
 import BestTimeCard from '@/components/analytics/BestTimeCard.vue'
 import ShareReportModal from '@/components/analytics/ShareReportModal.vue'
+import FeatureLock from '@/components/common/FeatureLock.vue'
 import { useRouter } from 'vue-router'
 import type { HealthScoreData, BestTimeData } from '@/types/analytics.types'
 import type { ShareReportData } from '@/composables/useShareReport'
 
 const router = useRouter()
 const channelsStore = useChannelsStore()
+const planStore = usePlanStore()
 const stats = ref<ChannelStats | null>(null)
 const subHistory = ref<SubscriberHistory | null>(null)
 const healthScore = ref<HealthScoreData | null>(null)
@@ -163,26 +166,43 @@ const dateLabels = computed(() => {
         />
       </div>
 
-      <HealthScoreCard v-if="healthScore" :data="healthScore" class="mt" />
-      <BestTimeCard v-if="bestTime" :data="bestTime" class="mt" />
+      <template v-if="planStore.hasFeature('fullAnalytics')">
+        <HealthScoreCard v-if="healthScore" :data="healthScore" class="mt" />
+        <BestTimeCard v-if="bestTime" :data="bestTime" class="mt" />
+
+        <button
+          v-if="shareReportData"
+          class="analytics-page__share-btn mt"
+          @click="showShareReport = true"
+        >
+          <AppIcon name="share" :size="18" color="var(--fp-primary)" />
+          <span>Поделиться отчётом</span>
+        </button>
+      </template>
+      <FeatureLock
+        v-else
+        title="Полная аналитика"
+        description="Health Score, лучшее время для постов, история подписчиков и экспорт отчётов. Доступно на тарифах Про и Максимум."
+        class="mt"
+      />
 
       <button
-        v-if="shareReportData"
-        class="analytics-page__share-btn mt"
-        @click="showShareReport = true"
+        class="analytics-page__competitors-btn mt"
+        @click="planStore.hasFeature('competitors') ? router.push({ name: 'competitors' }) : router.push({ name: 'pricing' })"
       >
-        <AppIcon name="share" :size="18" color="var(--fp-primary)" />
-        <span>Поделиться отчётом</span>
-      </button>
-
-      <button class="analytics-page__competitors-btn mt" @click="router.push({ name: 'competitors' })">
         <AppIcon name="chart" :size="18" color="var(--fp-primary)" />
         <span>Анализ конкурентов</span>
-        <AppIcon name="chevron-right" :size="16" color="var(--fp-text-tertiary)" />
+        <AppIcon
+          v-if="!planStore.hasFeature('competitors')"
+          name="lock"
+          :size="15"
+          color="var(--fp-text-tertiary)"
+        />
+        <AppIcon v-else name="chevron-right" :size="16" color="var(--fp-text-tertiary)" />
       </button>
 
       <!-- Subscriber growth -->
-      <div v-if="subHistory" class="sub-card mt">
+      <div v-if="subHistory && planStore.hasFeature('fullAnalytics')" class="sub-card mt">
         <div class="sub-card__header">
           <div class="sub-card__title-row">
             <AppIcon name="user" :size="18" color="var(--fp-primary)" />

@@ -20,6 +20,13 @@ api.interceptors.response.use(
       localStorage.removeItem('fp_token')
       window.location.reload()
     }
+    if (error.response?.status === 402) {
+      // Lazy import to avoid circular deps
+      import('@/stores/usePlanStore').then(({ usePlanStore }) => {
+        const limitCode = error.response?.data?.error ?? 'LIMIT_UNKNOWN'
+        usePlanStore().showPaywall(limitCode)
+      })
+    }
     return Promise.reject(error)
   },
 )

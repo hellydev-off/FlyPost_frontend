@@ -7,6 +7,8 @@ import { useThemeStore } from '@/stores/useThemeStore'
 import { profileApi, type ProfileData, type ProfileStats } from '@/api/profile.api'
 import { useAchievementsStore } from '@/stores/useAchievementsStore'
 import { ACHIEVEMENT_META } from '@/types/achievement.types'
+import { usePlanStore } from '@/stores/usePlanStore'
+import { PLAN_META } from '@/types/plan.types'
 import AppButton from '@/components/common/AppButton.vue'
 import AppInput from '@/components/common/AppInput.vue'
 import AppModal from '@/components/common/AppModal.vue'
@@ -18,6 +20,7 @@ const auth = useAuthStore()
 const toast = useToastStore()
 const themeStore = useThemeStore()
 const achievementsStore = useAchievementsStore()
+const planStore = usePlanStore()
 
 const profile = ref<ProfileData | null>(null)
 const stats = ref<ProfileStats | null>(null)
@@ -246,6 +249,36 @@ function doLogout(): void {
             </div>
             <span v-if="achievementsStore.hasType(meta.type)" class="profile__achievement-check">✓</span>
           </div>
+        </div>
+      </div>
+
+      <!-- Plan -->
+      <div class="profile__section">
+        <h3 class="profile__section-title">Подписка</h3>
+        <div
+          class="profile__plan-card"
+          :style="{ borderColor: PLAN_META[planStore.effectivePlan].color + '40' }"
+          @click="router.push({ name: 'pricing' })"
+        >
+          <div class="profile__plan-left">
+            <span class="profile__plan-emoji">{{ PLAN_META[planStore.effectivePlan].emoji }}</span>
+            <div>
+              <span
+                class="profile__plan-name"
+                :style="{ color: PLAN_META[planStore.effectivePlan].color }"
+              >{{ PLAN_META[planStore.effectivePlan].name }}</span>
+              <p v-if="planStore.isTrial" class="profile__plan-trial">
+                Пробный период · ещё {{ planStore.trialDaysLeft }} дн.
+              </p>
+              <p v-else-if="planStore.effectivePlan === 'free'" class="profile__plan-trial">
+                Бесплатный тариф
+              </p>
+              <p v-else class="profile__plan-trial">Подписка активна</p>
+            </div>
+          </div>
+          <span class="profile__plan-arrow">
+            <AppIcon name="chevron-right" :size="18" color="var(--fp-text-tertiary)" />
+          </span>
         </div>
       </div>
 
@@ -551,5 +584,45 @@ function doLogout(): void {
   font-weight: 700;
   color: var(--fp-success);
   flex-shrink: 0;
+}
+
+/* Plan card */
+.profile__plan-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--fp-bg-secondary);
+  border-radius: var(--fp-radius);
+  border: 1.5px solid var(--fp-border);
+  cursor: pointer;
+  transition: all var(--fp-transition);
+}
+
+.profile__plan-card:active {
+  opacity: 0.8;
+}
+
+.profile__plan-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile__plan-emoji {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.profile__plan-name {
+  font-size: 17px;
+  font-weight: 800;
+  display: block;
+}
+
+.profile__plan-trial {
+  font-size: 12px;
+  color: var(--fp-text-secondary);
+  margin-top: 2px;
 }
 </style>

@@ -12,11 +12,14 @@ import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import OnboardingCard from '@/components/home/OnboardingCard.vue'
 import { useOnboardingStore } from '@/stores/useOnboardingStore'
+import { usePlanStore } from '@/stores/usePlanStore'
+import { PLAN_META } from '@/types/plan.types'
 
 const router = useRouter()
 const auth = useAuthStore()
 const channelsStore = useChannelsStore()
 const onboarding = useOnboardingStore()
+const planStore = usePlanStore()
 
 const stats = ref<ChannelStats | null>(null)
 const streak = ref<StreakData | null>(null)
@@ -53,9 +56,20 @@ function goToPost(id: string): void {
           {{ auth.user?.firstName ?? 'Пользователь' }}
         </h1>
       </div>
-      <button class="home__avatar" @click="router.push({ name: 'profile' })">
-        {{ auth.user?.firstName?.[0]?.toUpperCase() ?? '?' }}
-      </button>
+      <div class="home__header-right">
+        <button
+          class="home__plan-badge"
+          :style="{ color: PLAN_META[planStore.effectivePlan].color, borderColor: PLAN_META[planStore.effectivePlan].color + '40' }"
+          @click="router.push({ name: 'pricing' })"
+        >
+          {{ PLAN_META[planStore.effectivePlan].emoji }}
+          {{ PLAN_META[planStore.effectivePlan].name }}
+          <span v-if="planStore.isTrial" class="home__plan-trial">пробный</span>
+        </button>
+        <button class="home__avatar" @click="router.push({ name: 'profile' })">
+          {{ auth.user?.firstName?.[0]?.toUpperCase() ?? '?' }}
+        </button>
+      </div>
     </div>
 
     <OnboardingCard v-if="!onboarding.allDone && !onboarding.dismissed" />
@@ -143,6 +157,35 @@ function goToPost(id: string): void {
   font-size: 26px;
   font-weight: 800;
   color: var(--fp-text);
+}
+
+.home__header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.home__plan-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  border: 1.5px solid;
+  font-size: 12px;
+  font-weight: 700;
+  background: transparent;
+  transition: opacity var(--fp-transition);
+  white-space: nowrap;
+}
+
+.home__plan-badge:active { opacity: 0.7; }
+
+.home__plan-trial {
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.7;
 }
 
 .home__avatar {

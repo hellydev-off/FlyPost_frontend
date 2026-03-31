@@ -2,10 +2,14 @@
 import { ref, onMounted } from 'vue'
 import { competitorApi } from '@/api/competitor.api'
 import { useToastStore } from '@/stores/useToastStore'
+import { usePlanStore } from '@/stores/usePlanStore'
 import AppButton from '@/components/common/AppButton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
+import FeatureLock from '@/components/common/FeatureLock.vue'
 import type { Competitor, CompetitorAnalysis } from '@/types/competitor.types'
+
+const planStore = usePlanStore()
 
 const toast = useToastStore()
 
@@ -82,11 +86,18 @@ function toggleExpand(id: string): void {
   <div class="competitors">
     <div class="competitors__header">
       <h1 class="competitors__title">Конкуренты</h1>
-      <button class="competitors__add-btn" @click="showAddForm = !showAddForm">
+      <button v-if="planStore.hasFeature('competitors')" class="competitors__add-btn" @click="showAddForm = !showAddForm">
         <AppIcon :name="showAddForm ? 'close' : 'plus'" :size="20" />
       </button>
     </div>
 
+    <FeatureLock
+      v-if="!planStore.hasFeature('competitors')"
+      title="Анализ конкурентов"
+      description="Отслеживайте Telegram-каналы конкурентов, получайте AI-анализ их контента и стратегии. Доступно на тарифах Про и Максимум."
+    />
+
+    <template v-else>
     <!-- Add form -->
     <div v-if="showAddForm" class="competitors__form">
       <input
@@ -163,6 +174,7 @@ function toggleExpand(id: string): void {
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 

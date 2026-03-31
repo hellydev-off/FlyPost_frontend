@@ -9,6 +9,8 @@
 html {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
@@ -17,7 +19,8 @@ body {
   line-height: 1.5;
   color: var(--fp-text);
   background-color: var(--fp-bg);
-  overflow-x: hidden;
+  overflow: hidden;
+  height: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

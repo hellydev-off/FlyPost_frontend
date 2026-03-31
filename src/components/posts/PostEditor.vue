@@ -6,6 +6,7 @@ import AppModal from '@/components/common/AppModal.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { aiApi, type GeneratePayload, type ImproveAction } from '@/api/ai.api'
 import { useToastStore } from '@/stores/useToastStore'
+import { usePlanStore } from '@/stores/usePlanStore'
 import TemplatePickerModal from './TemplatePickerModal.vue'
 
 const props = defineProps<{
@@ -18,6 +19,7 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToastStore()
+const planStore = usePlanStore()
 
 // --- Templates ---
 const showTemplatesModal = ref(false)
@@ -134,13 +136,28 @@ function onImproveClick(action: ImproveAction): void {
 
     <!-- AI toolbar -->
     <div class="ai-toolbar">
-      <button class="ai-toolbar__gen" @click="showAiModal = true">
-        <AppIcon name="sparkles" :size="16" />
+      <button
+        class="ai-toolbar__gen"
+        :class="{ 'ai-toolbar__gen--locked': !planStore.canUseAi() }"
+        @click="planStore.canUseAi() ? (showAiModal = true) : planStore.showPaywall('LIMIT_AI')"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
         <span>Сгенерировать</span>
+        <span v-if="!planStore.canUseAi()" class="ai-toolbar__lock-badge">PRO</span>
       </button>
-      <button class="ai-toolbar__tpl" @click="showTemplatesModal = true">
-        <AppIcon name="template" :size="16" />
+      <button
+        class="ai-toolbar__tpl"
+        :class="{ 'ai-toolbar__tpl--locked': !planStore.canAddTemplate() && planStore.limits.templates === 0 }"
+        @click="(planStore.limits.templates === 0) ? planStore.showPaywall('LIMIT_TEMPLATES') : (showTemplatesModal = true)"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.8" fill="none"/>
+          <path d="M14 2v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
         <span>Шаблоны</span>
+        <span v-if="planStore.limits.templates === 0" class="ai-toolbar__lock-badge">PRO</span>
       </button>
       <span class="ai-toolbar__divider" />
       <button
@@ -148,9 +165,9 @@ function onImproveClick(action: ImproveAction): void {
         :key="item.action"
         class="ai-toolbar__btn"
         :class="{ 'ai-toolbar__btn--loading': improveLoading === item.action }"
-        :disabled="!hasContent || improveLoading !== null"
+        :disabled="(!hasContent && planStore.canUseAi()) || improveLoading !== null"
         :title="item.label"
-        @click="onImproveClick(item.action)"
+        @click="planStore.canUseAi() ? onImproveClick(item.action) : planStore.showPaywall('LIMIT_AI')"
       >
         <span v-if="improveLoading === item.action" class="ai-toolbar__spinner" />
         <AppIcon v-else :name="item.icon" :size="16" />
@@ -299,6 +316,21 @@ function onImproveClick(action: ImproveAction): void {
 
 .ai-toolbar__gen:active {
   transform: scale(0.95);
+}
+
+.ai-toolbar__gen--locked {
+  background: var(--fp-bg-secondary);
+  color: var(--fp-text-secondary);
+}
+
+.ai-toolbar__lock-badge {
+  font-size: 9px;
+  font-weight: 800;
+  background: rgba(245,158,11,0.2);
+  color: #D97706;
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
 }
 
 .ai-toolbar__tpl {

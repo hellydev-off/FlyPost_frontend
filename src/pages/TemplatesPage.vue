@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTemplatesStore } from '@/stores/useTemplatesStore'
+import { usePlanStore } from '@/stores/usePlanStore'
 import { usePostsStore } from '@/stores/usePostsStore'
 import { useChannelsStore } from '@/stores/useChannelsStore'
 import TemplateCard from '@/components/templates/TemplateCard.vue'
@@ -13,6 +14,15 @@ import type { Template, TemplateCategory } from '@/types/template.types'
 const store = useTemplatesStore()
 const postsStore = usePostsStore()
 const channelsStore = useChannelsStore()
+const planStore = usePlanStore()
+
+function openCreate(): void {
+  if (planStore.limits.templates === 0) {
+    planStore.showPaywall('LIMIT_TEMPLATES')
+    return
+  }
+  showCreateModal.value = true
+}
 const router = useRouter()
 
 const selectedTemplate = ref<Template | null>(null)
@@ -85,7 +95,7 @@ async function applyTemplate(id: string, vars: Record<string, string>): Promise<
     <div v-else-if="store.filtered.length === 0" class="templates-page__empty">
       <AppIcon name="draft" :size="48" />
       <p>Шаблонов пока нет</p>
-      <button class="templates-page__empty-btn" @click="showCreateModal = true">Создать первый</button>
+      <button class="templates-page__empty-btn" @click="openCreate">Создать первый</button>
     </div>
 
     <!-- Grid -->
@@ -101,8 +111,10 @@ async function applyTemplate(id: string, vars: Record<string, string>): Promise<
     </div>
 
     <!-- FAB -->
-    <button class="templates-page__fab" @click="showCreateModal = true">
-      <AppIcon name="plus" :size="26" color="#fff" />
+    <button class="templates-page__fab" @click="openCreate">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+        <path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
     </button>
 
     <!-- Vars modal -->

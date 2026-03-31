@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useChannelsStore } from '@/stores/useChannelsStore'
+import { usePlanStore } from '@/stores/usePlanStore'
+import { useRouter } from 'vue-router'
 import ChannelCard from '@/components/channels/ChannelCard.vue'
 import ChannelAddModal from '@/components/channels/ChannelAddModal.vue'
 import ChannelVoiceModal from '@/components/channels/ChannelVoiceModal.vue'
@@ -9,6 +11,8 @@ import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 
 const channelsStore = useChannelsStore()
+const planStore = usePlanStore()
+const router = useRouter()
 const showAddModal = ref(false)
 const voiceChannelId = ref<string | null>(null)
 
@@ -47,7 +51,7 @@ function onAdd(payload: { telegramChannelId: string; title: string }): void {
         :channel="channel"
         @delete="channelsStore.deleteChannel"
         @select="channelsStore.selectChannel"
-        @profile="(id) => { voiceChannelId = id }"
+        @profile="(id) => { planStore.hasFeature('voiceProfile') ? (voiceChannelId = id) : router.push({ name: 'pricing' }) }"
       />
     </div>
 

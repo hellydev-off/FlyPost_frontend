@@ -53,30 +53,32 @@ function isActive(tabName: string): boolean {
   transform: translateX(-50%);
   width: 100%;
   max-width: var(--fp-max-width);
-  height: calc(var(--fp-bottom-nav-height) + env(safe-area-inset-bottom));
-  background: color-mix(in srgb, var(--fp-bg) 85%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  height: calc(var(--fp-bottom-nav-height) + max(env(safe-area-inset-bottom), 8px));
+  background: color-mix(in srgb, var(--fp-bg) 92%, transparent);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--fp-border);
   display: flex;
   align-items: flex-start;
   justify-content: space-around;
-  padding-top: 8px;
-  padding-bottom: env(safe-area-inset-bottom);
-  z-index: 50;
+  padding-top: 10px;
+  padding-bottom: max(env(safe-area-inset-bottom), 8px);
+  z-index: 100;
 }
 
 .bottom-nav__item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 4px 0;
+  gap: 3px;
+  padding: 6px 0 4px;
   color: var(--fp-text-tertiary);
   text-decoration: none;
   transition: color var(--fp-transition);
   flex: 1;
   position: relative;
+  /* Larger touch target for mobile */
+  min-height: 44px;
 }
 
 .bottom-nav__item--active {

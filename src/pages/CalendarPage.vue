@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { usePostsStore } from '@/stores/usePostsStore'
 import { useSchedulerStore } from '@/stores/useSchedulerStore'
 import { useChannelsStore } from '@/stores/useChannelsStore'
+import { usePlanStore } from '@/stores/usePlanStore'
 import PostStatusBadge from '@/components/posts/PostStatusBadge.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppButton from '@/components/common/AppButton.vue'
@@ -14,6 +15,7 @@ const router = useRouter()
 const postsStore = usePostsStore()
 const schedulerStore = useSchedulerStore()
 const channelsStore = useChannelsStore()
+const planStore = usePlanStore()
 
 const now = new Date()
 const viewYear = ref(now.getFullYear())
@@ -162,21 +164,28 @@ function goToPost(id: string): void {
 <template>
   <div class="calendar-page">
     <div class="calendar-page__header">
-      <h1>Календарь</h1>
-      <div class="calendar-page__header-actions">
-        <button
-          class="calendar-page__plan-btn"
-          :disabled="!channelsStore.selectedChannelId"
-          @click="showWeeklyPlan = true"
-        >
-          <AppIcon name="sparkles" :size="16" color="var(--fp-primary)" />
-          <span>План на неделю</span>
-        </button>
+      <div class="calendar-page__header-top">
+        <h1>Календарь</h1>
         <AppButton size="sm" @click="router.push({ name: 'post-create' })">
           <AppIcon name="plus" :size="16" />
           Пост
         </AppButton>
       </div>
+      <button
+        class="calendar-page__plan-btn"
+        :class="{ 'calendar-page__plan-btn--locked': !planStore.hasFeature('weeklyPlan') }"
+        :disabled="!channelsStore.selectedChannelId && planStore.hasFeature('weeklyPlan')"
+        @click="planStore.hasFeature('weeklyPlan') ? (showWeeklyPlan = true) : planStore.showPaywall('LIMIT_FEATURE_WEEKLY_PLAN')"
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Сгенерировать план на неделю</span>
+        <span v-if="!planStore.hasFeature('weeklyPlan')" class="calendar-page__plan-lock">PRO</span>
+        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <path d="m9 18 6-6-6-6" stroke="var(--fp-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
     </div>
 
     <template v-if="loading">
@@ -279,36 +288,58 @@ function goToPost(id: string): void {
 <style scoped>
 .calendar-page__header {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.calendar-page__header-top {
+  display: flex;
   align-items: center;
   justify-content: space-between;
 }
-
-.calendar-page__header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.calendar-page__plan-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
-  background: var(--fp-primary-bg);
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--fp-primary);
-  transition: all var(--fp-transition);
-}
-
-.calendar-page__plan-btn:active:not(:disabled) { opacity: 0.7; }
-.calendar-page__plan-btn:disabled { opacity: 0.4; }
 
 .calendar-page__header h1 {
   font-size: 24px;
   font-weight: 700;
   color: var(--fp-text);
+}
+
+.calendar-page__plan-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--fp-primary-bg);
+  border-radius: var(--fp-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fp-primary);
+  transition: all var(--fp-transition);
+}
+
+.calendar-page__plan-btn span {
+  flex: 1;
+  text-align: left;
+}
+
+.calendar-page__plan-btn:active:not(:disabled) { opacity: 0.7; transform: scale(0.99); }
+.calendar-page__plan-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.calendar-page__plan-btn--locked {
+  background: var(--fp-bg-secondary);
+  border-color: var(--fp-border);
+  color: var(--fp-text-secondary);
+}
+
+.calendar-page__plan-lock {
+  font-size: 10px;
+  font-weight: 800;
+  background: rgba(245,158,11,0.15);
+  color: #D97706;
+  padding: 2px 6px;
+  border-radius: 5px;
+  margin-left: auto;
 }
 
 /* Calendar */
