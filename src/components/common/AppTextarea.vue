@@ -37,36 +37,41 @@ const charCount = computed(() => props.modelValue.length)
 .app-textarea {
   display: flex;
   flex-direction: column;
-  gap: var(--fp-spacing-xs);
+  gap: 6px;
 }
 
 .app-textarea__label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--tg-theme-hint-color);
+  color: var(--fp-text-secondary);
 }
 
 .app-textarea__field {
-  padding: 12px 14px;
-  background: var(--tg-theme-secondary-bg-color);
+  padding: 13px 16px;
+  background: var(--fp-bg-secondary);
   border-radius: var(--fp-radius);
   font-size: 15px;
+  color: var(--fp-text);
   resize: vertical;
   min-height: 120px;
-  transition: box-shadow var(--fp-transition);
+  transition: box-shadow var(--fp-transition), background var(--fp-transition);
+  border: 1.5px solid transparent;
 }
 
 .app-textarea__field:focus {
-  box-shadow: 0 0 0 2px var(--tg-theme-button-color);
+  border-color: var(--fp-primary);
+  box-shadow: 0 0 0 3px var(--fp-primary-bg);
+  background: var(--fp-bg);
 }
 
 .app-textarea__field::placeholder {
-  color: var(--tg-theme-hint-color);
+  color: var(--fp-text-tertiary);
 }
 
 .app-textarea__counter {
   text-align: right;
   font-size: 12px;
-  color: var(--tg-theme-hint-color);
+  color: var(--fp-text-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 </style>

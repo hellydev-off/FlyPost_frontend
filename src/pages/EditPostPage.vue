@@ -6,6 +6,7 @@ import { useChannelsStore } from '@/stores/useChannelsStore'
 import PostEditor from '@/components/posts/PostEditor.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
 
 const props = defineProps<{
   id: string
@@ -54,7 +55,12 @@ async function remove(): Promise<void> {
 
 <template>
   <div class="edit-post">
-    <h1>Редактирование</h1>
+    <div class="edit-post__header">
+      <button class="edit-post__back" @click="router.back()">
+        <AppIcon name="arrow-left" :size="22" />
+      </button>
+      <h1>Редактирование</h1>
+    </div>
 
     <AppLoader v-if="postsStore.loading" />
 
@@ -68,32 +74,75 @@ async function remove(): Promise<void> {
 
       <div class="edit-post__actions mt">
         <AppButton block :loading="saving" @click="save">
+          <AppIcon name="check" :size="18" />
           Сохранить
         </AppButton>
         <AppButton block variant="secondary" :loading="saving" @click="publish">
+          <AppIcon name="rocket" :size="18" />
           Опубликовать
         </AppButton>
         <AppButton block variant="danger" @click="remove">
+          <AppIcon name="trash" :size="18" />
           Удалить
         </AppButton>
       </div>
     </template>
 
-    <div v-else class="text-center text-hint mt">
-      Пост не найден
+    <div v-else class="edit-post__empty">
+      <AppIcon name="draft" :size="48" color="var(--fp-text-tertiary)" />
+      <p>Пост не найден</p>
     </div>
   </div>
 </template>
 
 <style scoped>
-.edit-post h1 {
+.edit-post__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: var(--fp-spacing);
+}
+
+.edit-post__header h1 {
   font-size: 24px;
   font-weight: 700;
+  color: var(--fp-text);
+}
+
+.edit-post__back {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--fp-bg-secondary);
+  color: var(--fp-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--fp-transition);
+}
+
+.edit-post__back:active {
+  transform: scale(0.9);
+  background: var(--fp-bg-tertiary);
 }
 
 .edit-post__actions {
   display: flex;
   flex-direction: column;
   gap: var(--fp-spacing-sm);
+}
+
+.edit-post__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 48px 0;
+  text-align: center;
+}
+
+.edit-post__empty p {
+  font-size: 15px;
+  color: var(--fp-text-secondary);
 }
 </style>

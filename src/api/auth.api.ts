@@ -6,18 +6,41 @@ export interface AuthResponse {
   token: string
   user: {
     id: string
-    telegramId: string
+    telegramId: string | null
+    email: string | null
     username: string | null
     firstName: string
   }
 }
 
 export const authApi = {
+  async register(email: string, password: string, firstName: string): Promise<AuthResponse> {
+    if (isMockMode) {
+      return withDelay<AuthResponse>({
+        token: 'mock-jwt-token',
+        user: { id: 'mock-1', telegramId: null, email, username: null, firstName },
+      })
+    }
+    const { data } = await api.post<AuthResponse>('/api/auth/register', { email, password, firstName })
+    return data
+  },
+
+  async login(email: string, password: string): Promise<AuthResponse> {
+    if (isMockMode) {
+      return withDelay<AuthResponse>({
+        token: 'mock-jwt-token',
+        user: { id: 'mock-1', telegramId: null, email, username: null, firstName: 'Mock' },
+      })
+    }
+    const { data } = await api.post<AuthResponse>('/api/auth/login', { email, password })
+    return data
+  },
+
   async telegram(initData: string): Promise<AuthResponse> {
     if (isMockMode) {
       return withDelay<AuthResponse>({
         token: 'mock-jwt-token',
-        user: { id: 'mock-1', telegramId: '12345', username: 'mockuser', firstName: 'Mock User' },
+        user: { id: 'mock-1', telegramId: '12345', email: null, username: 'mockuser', firstName: 'Mock User' },
       })
     }
     const { data } = await api.post<AuthResponse>('/api/auth/telegram', { initData })

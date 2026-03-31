@@ -12,7 +12,7 @@ defineProps<{
     :style="{
       height: height ?? '20px',
       width: width ?? '100%',
-      borderRadius: radius ?? 'var(--fp-radius-sm)',
+      borderRadius: radius ?? 'var(--fp-radius)',
     }"
   />
 </template>
@@ -21,12 +21,12 @@ defineProps<{
 .skeleton {
   background: linear-gradient(
     90deg,
-    var(--tg-theme-secondary-bg-color) 25%,
-    rgba(0, 0, 0, 0.04) 50%,
-    var(--tg-theme-secondary-bg-color) 75%
+    var(--fp-bg-secondary) 25%,
+    var(--fp-bg-tertiary) 50%,
+    var(--fp-bg-secondary) 75%
   );
   background-size: 200px 100%;
-  animation: shimmer 1.5s infinite;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 @keyframes shimmer {

@@ -1,28 +1,18 @@
 @import './reset.css';
 @import './variables.css';
+@import './animations.css';
 
 #app {
   max-width: var(--fp-max-width);
   margin: 0 auto;
   padding: var(--fp-spacing);
-  padding-bottom: calc(var(--fp-bottom-nav-height) + var(--fp-spacing) * 2);
+  padding-bottom: calc(var(--fp-bottom-nav-height) + var(--fp-spacing) * 2 + env(safe-area-inset-bottom));
   min-height: 100vh;
-}
-
-/* Route transitions */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity var(--fp-transition);
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 
 /* Utility classes */
 .text-hint {
-  color: var(--tg-theme-hint-color);
+  color: var(--fp-text-secondary);
   font-size: 14px;
 }
 
@@ -30,13 +20,30 @@
   text-align: center;
 }
 
+.mt-xs { margin-top: var(--fp-spacing-xs); }
 .mt-sm { margin-top: var(--fp-spacing-sm); }
 .mt { margin-top: var(--fp-spacing); }
+.mt-lg { margin-top: var(--fp-spacing-lg); }
 .mb-sm { margin-bottom: var(--fp-spacing-sm); }
 .mb { margin-bottom: var(--fp-spacing); }
 
-/* Skeleton shimmer */
-@keyframes shimmer {
-  0% { background-position: -200px 0; }
-  100% { background-position: calc(200px + 100%) 0; }
+/* Selection */
+::selection {
+  background: var(--fp-primary-bg);
+  color: var(--fp-primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--fp-bg-tertiary);
+  border-radius: 4px;
 }

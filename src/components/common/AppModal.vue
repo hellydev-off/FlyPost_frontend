@@ -16,9 +16,12 @@ function onOverlayClick(e: MouseEvent): void {
   <Teleport to="body">
     <div class="modal-overlay" @click="onOverlayClick">
       <div class="modal">
+        <div class="modal__pill" />
         <div class="modal__header">
           <h3 class="modal__title">{{ title }}</h3>
-          <button class="modal__close" @click="$emit('close')">&#x2715;</button>
+          <button class="modal__close" @click="$emit('close')">
+            <svg width="20" height="20" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          </button>
         </div>
         <div class="modal__body">
           <slot />
@@ -32,7 +35,9 @@ function onOverlayClick(e: MouseEvent): void {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -41,39 +46,59 @@ function onOverlayClick(e: MouseEvent): void {
 }
 
 .modal {
-  background: var(--tg-theme-bg-color);
-  border-radius: var(--fp-radius) var(--fp-radius) 0 0;
+  background: var(--fp-bg);
+  border-radius: 20px 20px 0 0;
   width: 100%;
   max-width: var(--fp-max-width);
   max-height: 85vh;
   overflow-y: auto;
-  animation: slideUp 0.25s ease;
+  animation: slideUpBounce 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal__pill {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--fp-bg-tertiary);
+  margin: 8px auto 0;
 }
 
 .modal__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--fp-spacing);
-  border-bottom: 1px solid var(--tg-theme-secondary-bg-color);
+  padding: 16px var(--fp-spacing) 12px;
   position: sticky;
   top: 0;
-  background: var(--tg-theme-bg-color);
+  background: var(--fp-bg);
+  z-index: 1;
 }
 
 .modal__title {
   font-size: 17px;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--fp-text);
 }
 
 .modal__close {
-  font-size: 18px;
-  color: var(--tg-theme-hint-color);
-  padding: 4px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--fp-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fp-text-secondary);
+  transition: all var(--fp-transition);
+}
+
+.modal__close:active {
+  transform: scale(0.9);
+  background: var(--fp-bg-tertiary);
 }
 
 .modal__body {
-  padding: var(--fp-spacing);
+  padding: 4px var(--fp-spacing) calc(var(--fp-spacing) + env(safe-area-inset-bottom));
 }
 
 @keyframes fadeIn {
@@ -81,8 +106,9 @@ function onOverlayClick(e: MouseEvent): void {
   to { opacity: 1; }
 }
 
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+@keyframes slideUpBounce {
+  0% { transform: translateY(100%); }
+  70% { transform: translateY(-2%); }
+  100% { transform: translateY(0); }
 }
 </style>

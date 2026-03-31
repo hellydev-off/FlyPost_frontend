@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { postsApi } from '@/api/posts.api'
 import { useToastStore } from './useToastStore'
+import { useAchievementsStore } from './useAchievementsStore'
 import type { Post, CreatePostPayload, UpdatePostPayload, PostFilters } from '@/types/post.types'
 
 export const usePostsStore = defineStore('posts', () => {
@@ -40,6 +41,7 @@ export const usePostsStore = defineStore('posts', () => {
       const post = await postsApi.create(payload)
       posts.value.unshift(post)
       useToastStore().show('Черновик сохранён', 'success')
+      useAchievementsStore().check()
       return post
     } catch {
       useToastStore().show('Не удалось создать пост', 'error')
@@ -66,6 +68,7 @@ export const usePostsStore = defineStore('posts', () => {
       if (idx !== -1) posts.value[idx] = published
       if (currentPost.value?.id === id) currentPost.value = published
       useToastStore().show('Пост опубликован!', 'success')
+      useAchievementsStore().check()
     } catch {
       useToastStore().show('Не удалось опубликовать пост', 'error')
     }

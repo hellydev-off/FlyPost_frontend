@@ -1,26 +1,81 @@
 :root {
-  /* Telegram theme fallbacks */
-  --tg-theme-bg-color: #ffffff;
-  --tg-theme-text-color: #000000;
-  --tg-theme-hint-color: #999999;
-  --tg-theme-link-color: #2481cc;
-  --tg-theme-button-color: #2481cc;
-  --tg-theme-button-text-color: #ffffff;
-  --tg-theme-secondary-bg-color: #f0f0f0;
+  /* Primary palette */
+  --fp-primary: #3B82F6;
+  --fp-primary-light: #60A5FA;
+  --fp-primary-dark: #2563EB;
+  --fp-primary-bg: rgba(59, 130, 246, 0.08);
 
-  /* App variables */
-  --fp-radius: 12px;
-  --fp-radius-sm: 8px;
+  /* Backgrounds */
+  --fp-bg: #FFFFFF;
+  --fp-bg-secondary: #F1F5F9;
+  --fp-bg-tertiary: #E2E8F0;
+
+  /* Text */
+  --fp-text: #0F172A;
+  --fp-text-secondary: #64748B;
+  --fp-text-tertiary: #94A3B8;
+
+  /* Border */
+  --fp-border: #E2E8F0;
+
+  /* Status colors */
+  --fp-success: #22C55E;
+  --fp-success-bg: rgba(34, 197, 94, 0.1);
+  --fp-error: #EF4444;
+  --fp-error-bg: rgba(239, 68, 68, 0.1);
+  --fp-warning: #F59E0B;
+  --fp-warning-bg: rgba(245, 158, 11, 0.1);
+  --fp-info: #3B82F6;
+  --fp-info-bg: rgba(59, 130, 246, 0.1);
+
+  /* Radii */
+  --fp-radius: 14px;
+  --fp-radius-sm: 10px;
+  --fp-radius-xs: 6px;
+
+  /* Spacing */
   --fp-spacing: 16px;
   --fp-spacing-sm: 8px;
   --fp-spacing-xs: 4px;
-  --fp-transition: 0.2s ease;
-  --fp-max-width: 480px;
-  --fp-bottom-nav-height: 60px;
+  --fp-spacing-lg: 24px;
 
-  /* Status colors */
-  --fp-success: #34c759;
-  --fp-error: #ff3b30;
-  --fp-warning: #ff9500;
-  --fp-info: #007aff;
+  /* Transitions */
+  --fp-transition: 0.2s ease;
+  --fp-transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Shadows */
+  --fp-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --fp-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --fp-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* Layout */
+  --fp-max-width: 480px;
+  --fp-bottom-nav-height: 64px;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --fp-primary: #3B82F6;
+  --fp-primary-light: #60A5FA;
+  --fp-primary-dark: #2563EB;
+  --fp-primary-bg: rgba(59, 130, 246, 0.15);
+
+  --fp-bg: #0F172A;
+  --fp-bg-secondary: #1E293B;
+  --fp-bg-tertiary: #334155;
+
+  --fp-text: #F1F5F9;
+  --fp-text-secondary: #94A3B8;
+  --fp-text-tertiary: #64748B;
+
+  --fp-border: #334155;
+
+  --fp-success-bg: rgba(34, 197, 94, 0.15);
+  --fp-error-bg: rgba(239, 68, 68, 0.15);
+  --fp-warning-bg: rgba(245, 158, 11, 0.15);
+  --fp-info-bg: rgba(59, 130, 246, 0.15);
+
+  --fp-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --fp-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --fp-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
 }

@@ -1,67 +1,81 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { getTelegramUser, getTelegramWebApp, type TelegramUser } from '@/utils/telegram'
-import { authApi } from '@/api/auth.api'
-import { isMockMode } from '@/api/mock'
+import { authApi, type AuthResponse } from '@/api/auth.api'
+import { useToastStore } from './useToastStore'
 
-const DEV_USER: TelegramUser = {
-  id: 100001,
-  first_name: 'Dev User',
-  username: 'devuser',
+export interface AppUser {
+  id: string
+  firstName: string
+  email: string | null
+  username: string | null
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<TelegramUser | null>(null)
+  const user = ref<AppUser | null>(null)
   const token = ref<string | null>(localStorage.getItem('fp_token'))
   const isLoading = ref(false)
 
   const isAuthenticated = computed(() => !!token.value && !!user.value)
 
-  async function initFromTelegram(): Promise<void> {
+  function applyResult(result: AuthResponse): void {
+    token.value = result.token
+    localStorage.setItem('fp_token', result.token)
+    user.value = {
+      id: result.user.id,
+      firstName: result.user.firstName,
+      email: result.user.email,
+      username: result.user.username,
+    }
+    localStorage.setItem('fp_user', JSON.stringify(user.value))
+  }
+
+  async function register(email: string, password: string, firstName: string): Promise<void> {
     isLoading.value = true
     try {
-      if (isMockMode) {
-        user.value = getTelegramUser() ?? DEV_USER
-        return
-      }
-
-      const tgWebApp = getTelegramWebApp()
-      const tgUser = getTelegramUser()
-      const initData = tgWebApp?.initData
-
-      if (initData) {
-        // Реальный Telegram Mini App: валидируем через бэкенд
-        const result = await authApi.telegram(initData)
-        setToken(result.token)
-        user.value = tgUser ?? {
-          id: parseInt(result.user.telegramId),
-          first_name: result.user.firstName,
-          username: result.user.username ?? undefined,
-        }
-      } else {
-        // Браузер / dev режим: dev-login через бэкенд
-        const devUser = tgUser ?? DEV_USER
-        const result = await authApi.devLogin(devUser)
-        setToken(result.token)
-        user.value = devUser
-      }
-    } catch (err) {
-      console.error('[Auth] Init failed:', err)
+      const result = await authApi.register(email, password, firstName)
+      applyResult(result)
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message ?? 'Ошибка регистрации'
+      useToastStore().show(message, 'error')
+      throw err
     } finally {
       isLoading.value = false
     }
   }
 
-  function setToken(jwt: string): void {
-    token.value = jwt
-    localStorage.setItem('fp_token', jwt)
+  async function login(email: string, password: string): Promise<void> {
+    isLoading.value = true
+    try {
+      const result = await authApi.login(email, password)
+      applyResult(result)
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message ?? 'Неверный email или пароль'
+      useToastStore().show(message, 'error')
+      throw err
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  function restoreSession(): void {
+    const savedUser = localStorage.getItem('fp_user')
+    if (token.value && savedUser) {
+      try {
+        user.value = JSON.parse(savedUser) as AppUser
+      } catch {
+        logout()
+      }
+    }
   }
 
   function logout(): void {
     user.value = null
     token.value = null
     localStorage.removeItem('fp_token')
+    localStorage.removeItem('fp_user')
   }
 
-  return { user, token, isAuthenticated, isLoading, initFromTelegram, setToken, logout }
+  return { user, token, isAuthenticated, isLoading, register, login, restoreSession, logout }
 })

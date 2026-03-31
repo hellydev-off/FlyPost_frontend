@@ -28,28 +28,32 @@ defineEmits<{
 .app-input {
   display: flex;
   flex-direction: column;
-  gap: var(--fp-spacing-xs);
+  gap: 6px;
 }
 
 .app-input__label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--tg-theme-hint-color);
+  color: var(--fp-text-secondary);
 }
 
 .app-input__field {
-  padding: 12px 14px;
-  background: var(--tg-theme-secondary-bg-color);
+  padding: 13px 16px;
+  background: var(--fp-bg-secondary);
   border-radius: var(--fp-radius);
   font-size: 15px;
-  transition: box-shadow var(--fp-transition);
+  color: var(--fp-text);
+  transition: box-shadow var(--fp-transition), background var(--fp-transition);
+  border: 1.5px solid transparent;
 }
 
 .app-input__field:focus {
-  box-shadow: 0 0 0 2px var(--tg-theme-button-color);
+  border-color: var(--fp-primary);
+  box-shadow: 0 0 0 3px var(--fp-primary-bg);
+  background: var(--fp-bg);
 }
 
 .app-input__field::placeholder {
-  color: var(--tg-theme-hint-color);
+  color: var(--fp-text-tertiary);
 }
 </style>

@@ -1,15 +1,20 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
+import AppIcon from './AppIcon.vue'
 
 const route = useRoute()
 
 const tabs = [
-  { name: 'home', path: '/', icon: '&#x1F3E0;', label: 'Главная' },
-  { name: 'channels', path: '/channels', icon: '&#x1F4E2;', label: 'Каналы' },
-  { name: 'post-create', path: '/posts/create', icon: '&#x2795;', label: 'Создать' },
-  { name: 'scheduler', path: '/scheduler', icon: '&#x1F4C5;', label: 'Планер' },
-  { name: 'analytics', path: '/analytics', icon: '&#x1F4CA;', label: 'Статистика' },
+  { name: 'home', path: '/', icon: 'home', iconActive: 'home-filled', label: 'Главная' },
+  { name: 'channels', path: '/channels', icon: 'channels', iconActive: 'channels-filled', label: 'Каналы' },
+  { name: 'post-create', path: '/posts/create', icon: 'plus', iconActive: 'plus', label: '' },
+  { name: 'calendar', path: '/calendar', icon: 'calendar', iconActive: 'calendar-filled', label: 'Календарь' },
+  { name: 'analytics', path: '/analytics', icon: 'chart', iconActive: 'chart-filled', label: 'Аналитика' },
 ]
+
+function isActive(tabName: string): boolean {
+  return route.name === tabName
+}
 </script>
 
 <template>
@@ -19,10 +24,23 @@ const tabs = [
       :key="tab.name"
       :to="tab.path"
       class="bottom-nav__item"
-      :class="{ 'bottom-nav__item--active': route.name === tab.name }"
+      :class="{
+        'bottom-nav__item--active': isActive(tab.name),
+        'bottom-nav__item--create': tab.name === 'post-create',
+      }"
     >
-      <span class="bottom-nav__icon" v-html="tab.icon" />
-      <span class="bottom-nav__label">{{ tab.label }}</span>
+      <template v-if="tab.name === 'post-create'">
+        <span class="bottom-nav__create-btn">
+          <AppIcon name="plus" :size="28" color="#fff" />
+        </span>
+      </template>
+      <template v-else>
+        <AppIcon
+          :name="isActive(tab.name) ? tab.iconActive : tab.icon"
+          :size="22"
+        />
+        <span class="bottom-nav__label">{{ tab.label }}</span>
+      </template>
     </RouterLink>
   </nav>
 </template>
@@ -35,14 +53,17 @@ const tabs = [
   transform: translateX(-50%);
   width: 100%;
   max-width: var(--fp-max-width);
-  height: var(--fp-bottom-nav-height);
-  background: var(--tg-theme-bg-color);
-  border-top: 1px solid var(--tg-theme-secondary-bg-color);
+  height: calc(var(--fp-bottom-nav-height) + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--fp-bg) 85%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid var(--fp-border);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-around;
-  z-index: 50;
+  padding-top: 8px;
   padding-bottom: env(safe-area-inset-bottom);
+  z-index: 50;
 }
 
 .bottom-nav__item {
@@ -50,24 +71,47 @@ const tabs = [
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 6px 0;
-  color: var(--tg-theme-hint-color);
+  padding: 4px 0;
+  color: var(--fp-text-tertiary);
   text-decoration: none;
   transition: color var(--fp-transition);
   flex: 1;
+  position: relative;
 }
 
 .bottom-nav__item--active {
-  color: var(--tg-theme-button-color);
+  color: var(--fp-primary);
 }
 
-.bottom-nav__icon {
-  font-size: 20px;
-  line-height: 1;
+.bottom-nav__item--create {
+  color: var(--fp-text-tertiary);
+}
+
+.bottom-nav__create-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--fp-primary) 0%, var(--fp-primary-dark) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -20px;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+  transition: transform var(--fp-transition), box-shadow var(--fp-transition);
+}
+
+.bottom-nav__item--create:active .bottom-nav__create-btn {
+  transform: scale(0.92);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
 }
 
 .bottom-nav__label {
   font-size: 10px;
   font-weight: 500;
+  line-height: 1;
+}
+
+.bottom-nav__item:not(.bottom-nav__item--create):active {
+  transform: scale(0.92);
 }
 </style>

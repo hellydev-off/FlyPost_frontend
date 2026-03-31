@@ -31,8 +31,10 @@ defineProps<{
   gap: 8px;
   border-radius: var(--fp-radius);
   font-weight: 600;
-  transition: opacity var(--fp-transition), transform var(--fp-transition);
+  transition: all var(--fp-transition);
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
 }
 
 .app-button:active:not(:disabled) {
@@ -40,12 +42,12 @@ defineProps<{
 }
 
 .app-button:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .app-button--md {
-  padding: 12px 20px;
+  padding: 13px 22px;
   font-size: 15px;
 }
 
@@ -56,23 +58,28 @@ defineProps<{
 }
 
 .app-button--primary {
-  background: var(--tg-theme-button-color);
-  color: var(--tg-theme-button-text-color);
+  background: linear-gradient(135deg, var(--fp-primary) 0%, var(--fp-primary-dark) 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.app-button--primary:active:not(:disabled) {
+  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.2);
 }
 
 .app-button--secondary {
-  background: var(--tg-theme-secondary-bg-color);
-  color: var(--tg-theme-text-color);
+  background: var(--fp-bg-secondary);
+  color: var(--fp-text);
 }
 
 .app-button--danger {
-  background: var(--fp-error);
-  color: #fff;
+  background: var(--fp-error-bg);
+  color: var(--fp-error);
 }
 
 .app-button--ghost {
   background: transparent;
-  color: var(--tg-theme-link-color);
+  color: var(--fp-primary);
 }
 
 .app-button--block {

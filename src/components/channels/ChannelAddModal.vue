@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import AppModal from '@/components/common/AppModal.vue'
 import AppInput from '@/components/common/AppInput.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
 
 const emit = defineEmits<{
   close: []
@@ -13,9 +14,11 @@ const title = ref('')
 const username = ref('')
 
 function onSubmit(): void {
-  if (!title.value.trim()) return
+  if (!title.value.trim() || !username.value.trim()) return
+  const raw = username.value.trim()
+  const channelId = raw.startsWith('-') ? raw : raw.startsWith('@') ? raw : `@${raw}`
   emit('add', {
-    telegramChannelId: username.value.replace('@', '').trim(),
+    telegramChannelId: channelId,
     title: title.value.trim(),
   })
 }
@@ -24,10 +27,16 @@ function onSubmit(): void {
 <template>
   <AppModal title="Добавить канал" @close="$emit('close')">
     <div class="add-channel">
-      <p class="add-channel__hint text-hint">
-        1. Добавьте бота <strong>@flypost_bot</strong> как администратора вашего канала<br />
-        2. Укажите название и username канала ниже
-      </p>
+      <div class="add-channel__hint">
+        <div class="add-channel__step">
+          <span class="add-channel__step-num">1</span>
+          <span>Добавьте бота <strong>@flypost_bot</strong> как администратора канала</span>
+        </div>
+        <div class="add-channel__step">
+          <span class="add-channel__step-num">2</span>
+          <span>Укажите данные канала ниже</span>
+        </div>
+      </div>
       <AppInput v-model="title" label="Название канала" placeholder="Мой канал" />
       <AppInput v-model="username" label="Username канала" placeholder="@mychannel" />
       <AppButton block :disabled="!title.trim()" @click="onSubmit">
@@ -45,6 +54,35 @@ function onSubmit(): void {
 }
 
 .add-channel__hint {
-  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-channel__step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fp-text-secondary);
+}
+
+.add-channel__step strong {
+  color: var(--fp-primary);
+}
+
+.add-channel__step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--fp-primary-bg);
+  color: var(--fp-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 </style>

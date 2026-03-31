@@ -46,20 +46,21 @@ function pct(val: number): string {
 <style scoped>
 .chart {
   padding: var(--fp-spacing);
-  background: var(--tg-theme-secondary-bg-color);
+  background: var(--fp-bg-secondary);
   border-radius: var(--fp-radius);
 }
 
 .chart__title {
   font-weight: 600;
   font-size: 15px;
+  color: var(--fp-text);
   margin-bottom: var(--fp-spacing);
 }
 
 .chart__bars {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .chart__row {
@@ -71,30 +72,37 @@ function pct(val: number): string {
 
 .chart__label {
   font-size: 13px;
-  color: var(--tg-theme-hint-color);
+  color: var(--fp-text-secondary);
 }
 
 .chart__bar-track {
-  height: 20px;
-  background: var(--tg-theme-bg-color);
-  border-radius: 10px;
+  height: 22px;
+  background: var(--fp-bg);
+  border-radius: 11px;
   overflow: hidden;
 }
 
 .chart__bar {
   height: 100%;
-  border-radius: 10px;
-  transition: width 0.5s ease;
+  border-radius: 11px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   min-width: 4px;
 }
 
-.chart__bar--published { background: var(--fp-success); }
-.chart__bar--scheduled { background: var(--fp-info); }
-.chart__bar--drafts { background: var(--tg-theme-hint-color); }
+.chart__bar--published {
+  background: linear-gradient(90deg, var(--fp-success), #4ade80);
+}
+.chart__bar--scheduled {
+  background: linear-gradient(90deg, var(--fp-primary), var(--fp-primary-light));
+}
+.chart__bar--drafts {
+  background: linear-gradient(90deg, var(--fp-text-tertiary), var(--fp-text-secondary));
+}
 
 .chart__value {
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   text-align: right;
+  color: var(--fp-text);
 }
 </style>

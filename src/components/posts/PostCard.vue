@@ -13,10 +13,10 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="post-card" @click="$emit('click', post.id)">
+  <div class="post-card pressable" @click="$emit('click', post.id)">
     <div class="post-card__header">
       <PostStatusBadge :status="post.status" />
-      <span class="post-card__date text-hint">{{ formatDateTime(post.createdAt) }}</span>
+      <span class="post-card__date">{{ formatDateTime(post.createdAt) }}</span>
     </div>
     <p class="post-card__content">{{ post.content }}</p>
   </div>
@@ -25,30 +25,33 @@ defineEmits<{
 <style scoped>
 .post-card {
   padding: var(--fp-spacing);
-  background: var(--tg-theme-secondary-bg-color);
+  background: var(--fp-bg-secondary);
   border-radius: var(--fp-radius);
   cursor: pointer;
-  transition: opacity var(--fp-transition);
+  transition: all var(--fp-transition);
+  border: 1px solid transparent;
 }
 
 .post-card:active {
-  opacity: 0.8;
+  background: var(--fp-bg-tertiary);
 }
 
 .post-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--fp-spacing-sm);
+  margin-bottom: 10px;
 }
 
 .post-card__date {
   font-size: 12px;
+  color: var(--fp-text-tertiary);
 }
 
 .post-card__content {
   font-size: 14px;
   line-height: 1.5;
+  color: var(--fp-text);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;

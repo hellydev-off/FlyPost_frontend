@@ -21,8 +21,8 @@ defineProps<{
 }
 
 .loader__spinner {
-  border: 3px solid var(--tg-theme-secondary-bg-color);
-  border-top-color: var(--tg-theme-button-color);
+  border: 3px solid var(--fp-bg-tertiary);
+  border-top-color: var(--fp-primary);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
