@@ -13,6 +13,7 @@ import AppIcon from '@/components/common/AppIcon.vue'
 import OnboardingCard from '@/components/home/OnboardingCard.vue'
 import { useOnboardingStore } from '@/stores/useOnboardingStore'
 import { usePlanStore } from '@/stores/usePlanStore'
+import { usePostsStore } from '@/stores/usePostsStore'
 import { PLAN_META } from '@/types/plan.types'
 
 const router = useRouter()
@@ -20,6 +21,7 @@ const auth = useAuthStore()
 const channelsStore = useChannelsStore()
 const onboarding = useOnboardingStore()
 const planStore = usePlanStore()
+const postsStore = usePostsStore()
 
 const stats = ref<ChannelStats | null>(null)
 const streak = ref<StreakData | null>(null)
@@ -29,6 +31,7 @@ const loading = ref(true)
 onMounted(async () => {
   await channelsStore.fetchChannels()
   const channelId = channelsStore.selectedChannelId
+  await postsStore.fetchPosts(channelId ? { channelId } : undefined)
   if (channelId) {
     const [s, st, hs] = await Promise.all([
       analyticsApi.getStats(channelId),
@@ -114,6 +117,22 @@ function goToPost(id: string): void {
         <AppIcon name="plus" :size="18" />
         Создать пост
       </AppButton>
+
+      <div v-if="postsStore.draftPosts.length" class="home__drafts mt">
+        <h2 class="home__section-title">Черновики</h2>
+        <div class="home__drafts-list stagger">
+          <div
+            v-for="post in postsStore.draftPosts.slice(0, 5)"
+            :key="post.id"
+            class="home__draft pressable"
+            @click="goToPost(post.id)"
+          >
+            <AppIcon name="draft" :size="16" color="var(--fp-text-tertiary)" />
+            <p class="home__draft-text">{{ post.content.slice(0, 80) || 'Пустой черновик' }}</p>
+            <AppIcon name="chevron-right" :size="14" color="var(--fp-text-tertiary)" />
+          </div>
+        </div>
+      </div>
 
       <div v-if="stats.lastPosts.length" class="home__recent mt">
         <h2 class="home__section-title">Последние посты</h2>
@@ -280,6 +299,35 @@ function goToPost(id: string): void {
   display: flex;
   flex-direction: column;
   gap: var(--fp-spacing-sm);
+}
+
+.home__drafts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.home__draft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--fp-bg-secondary);
+  border-radius: var(--fp-radius-sm);
+  cursor: pointer;
+  transition: background var(--fp-transition);
+}
+
+.home__draft:active { background: var(--fp-bg-tertiary); }
+
+.home__draft-text {
+  flex: 1;
+  font-size: 13px;
+  color: var(--fp-text);
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .home__empty {

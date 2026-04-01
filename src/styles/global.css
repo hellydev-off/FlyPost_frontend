@@ -12,8 +12,10 @@
   overflow-x: hidden;
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
-  padding: var(--fp-spacing);
-  padding-bottom: calc(var(--fp-bottom-nav-height) + var(--fp-spacing) + max(env(safe-area-inset-bottom), 8px));
+  padding-top: var(--fp-tg-header-height);
+  padding-left: var(--fp-spacing);
+  padding-right: var(--fp-spacing);
+  padding-bottom: calc(var(--fp-bottom-nav-height) + var(--fp-tg-bottom-inset) + 20px);
 }
 
 /* Utility classes */

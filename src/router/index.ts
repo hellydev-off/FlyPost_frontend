@@ -81,6 +81,11 @@ const router = createRouter({
       name: 'templates',
       component: () => import('@/pages/TemplatesPage.vue'),
     },
+    {
+      path: '/history',
+      name: 'history',
+      component: () => import('@/pages/HistoryPage.vue'),
+    },
   ],
 })
 

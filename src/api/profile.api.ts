@@ -23,7 +23,7 @@ export const profileApi = {
     if (isMockMode) {
       return withDelay({
         id: 'mock-1',
-        email: 'dev@flypost.app',
+        email: 'dev@neopost.app',
         firstName: 'Dev User',
         username: 'devuser',
         telegramId: null,
@@ -39,7 +39,7 @@ export const profileApi = {
     if (isMockMode) {
       return withDelay({
         id: 'mock-1',
-        email: 'dev@flypost.app',
+        email: 'dev@neopost.app',
         firstName: payload.firstName ?? 'Dev User',
         username: payload.username ?? 'devuser',
         telegramId: null,

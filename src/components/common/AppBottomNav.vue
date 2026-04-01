@@ -1,19 +1,31 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AppIcon from './AppIcon.vue'
 
 const route = useRoute()
+const router = useRouter()
+
+const showMoreSheet = ref(false)
 
 const tabs = [
   { name: 'home', path: '/', icon: 'home', iconActive: 'home-filled', label: 'Главная' },
   { name: 'channels', path: '/channels', icon: 'channels', iconActive: 'channels-filled', label: 'Каналы' },
   { name: 'post-create', path: '/posts/create', icon: 'plus', iconActive: 'plus', label: '' },
   { name: 'calendar', path: '/calendar', icon: 'calendar', iconActive: 'calendar-filled', label: 'Календарь' },
-  { name: 'analytics', path: '/analytics', icon: 'chart', iconActive: 'chart-filled', label: 'Аналитика' },
 ]
 
 function isActive(tabName: string): boolean {
   return route.name === tabName
+}
+
+const isMoreActive = computed(() =>
+  route.name === 'analytics' || route.name === 'history'
+)
+
+function navigate(path: string): void {
+  showMoreSheet.value = false
+  router.push(path)
 }
 </script>
 
@@ -42,27 +54,98 @@ function isActive(tabName: string): boolean {
         <span class="bottom-nav__label">{{ tab.label }}</span>
       </template>
     </RouterLink>
+
+    <!-- Кнопка Ещё -->
+    <button
+      class="bottom-nav__item"
+      :class="{ 'bottom-nav__item--active': isMoreActive || showMoreSheet }"
+      @click="showMoreSheet = true"
+    >
+      <AppIcon name="grid" :size="22" />
+      <span class="bottom-nav__label">Ещё</span>
+    </button>
   </nav>
+
+  <!-- Overlay -->
+  <Teleport to="body">
+    <Transition name="sheet-fade">
+      <div v-if="showMoreSheet" class="more-overlay" @click="showMoreSheet = false" />
+    </Transition>
+
+    <Transition name="sheet-slide">
+      <div v-if="showMoreSheet" class="more-sheet">
+        <div class="more-sheet__handle" />
+
+        <p class="more-sheet__section-title">Разделы</p>
+
+        <button class="more-sheet__item" @click="navigate('/analytics')">
+          <span class="more-sheet__item-icon">
+            <AppIcon name="chart" :size="20" />
+          </span>
+          <div class="more-sheet__item-body">
+            <span class="more-sheet__item-label">Аналитика</span>
+            <span class="more-sheet__item-desc">Статистика и графики</span>
+          </div>
+          <AppIcon name="chevron-right" :size="16" />
+        </button>
+
+        <p class="more-sheet__section-title">История</p>
+
+        <button class="more-sheet__item" @click="navigate('/history')">
+          <span class="more-sheet__item-icon more-sheet__item-icon--posts">
+            <AppIcon name="draft" :size="20" />
+          </span>
+          <div class="more-sheet__item-body">
+            <span class="more-sheet__item-label">История постов</span>
+            <span class="more-sheet__item-desc">Все черновики и публикации</span>
+          </div>
+          <AppIcon name="chevron-right" :size="16" />
+        </button>
+
+        <button class="more-sheet__item" @click="navigate('/history?tab=daily')">
+          <span class="more-sheet__item-icon more-sheet__item-icon--daily">
+            <AppIcon name="clock" :size="20" />
+          </span>
+          <div class="more-sheet__item-body">
+            <span class="more-sheet__item-label">Планы на день</span>
+            <span class="more-sheet__item-desc">История генераций дневных планов</span>
+          </div>
+          <AppIcon name="chevron-right" :size="16" />
+        </button>
+
+        <button class="more-sheet__item" @click="navigate('/history?tab=weekly')">
+          <span class="more-sheet__item-icon more-sheet__item-icon--weekly">
+            <AppIcon name="calendar" :size="20" />
+          </span>
+          <div class="more-sheet__item-body">
+            <span class="more-sheet__item-label">Планы на неделю</span>
+            <span class="more-sheet__item-desc">История генераций недельных планов</span>
+          </div>
+          <AppIcon name="chevron-right" :size="16" />
+        </button>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <style scoped>
 .bottom-nav {
   position: fixed;
-  bottom: 0;
+  bottom: var(--fp-tg-bottom-inset);
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
   max-width: var(--fp-max-width);
-  height: calc(var(--fp-bottom-nav-height) + max(env(safe-area-inset-bottom), 8px));
+  height: var(--fp-bottom-nav-height);
   background: color-mix(in srgb, var(--fp-bg) 92%, transparent);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--fp-border);
+  border-radius: 16px 16px 0 0;
   display: flex;
   align-items: flex-start;
   justify-content: space-around;
   padding-top: 10px;
-  padding-bottom: max(env(safe-area-inset-bottom), 8px);
   z-index: 100;
 }
 
@@ -77,8 +160,8 @@ function isActive(tabName: string): boolean {
   transition: color var(--fp-transition);
   flex: 1;
   position: relative;
-  /* Larger touch target for mobile */
   min-height: 44px;
+  background: none;
 }
 
 .bottom-nav__item--active {
@@ -116,4 +199,114 @@ function isActive(tabName: string): boolean {
 .bottom-nav__item:not(.bottom-nav__item--create):active {
   transform: scale(0.92);
 }
+
+/* Overlay */
+.more-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+}
+
+/* Sheet */
+.more-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--fp-max-width);
+  background: var(--fp-bg);
+  border-radius: 20px 20px 0 0;
+  padding: 12px 16px calc(max(env(safe-area-inset-bottom), 16px) + 16px);
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.more-sheet__handle {
+  width: 36px;
+  height: 4px;
+  background: var(--fp-border);
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+
+.more-sheet__section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--fp-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0 4px;
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.more-sheet__section-title:first-of-type {
+  margin-top: 0;
+}
+
+.more-sheet__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--fp-radius-sm);
+  color: var(--fp-text);
+  transition: background var(--fp-transition);
+  width: 100%;
+  text-align: left;
+}
+
+.more-sheet__item:active {
+  background: var(--fp-bg-secondary);
+}
+
+.more-sheet__item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--fp-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--fp-text-secondary);
+}
+
+.more-sheet__item-icon--posts { background: rgba(59,130,246,0.1); color: var(--fp-primary); }
+.more-sheet__item-icon--daily { background: rgba(16,185,129,0.1); color: #10B981; }
+.more-sheet__item-icon--weekly { background: rgba(139,92,246,0.1); color: #8B5CF6; }
+
+.more-sheet__item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.more-sheet__item-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fp-text);
+}
+
+.more-sheet__item-desc {
+  font-size: 12px;
+  color: var(--fp-text-secondary);
+}
+
+/* Transitions */
+.sheet-fade-enter-active,
+.sheet-fade-leave-active { transition: opacity 0.25s ease; }
+.sheet-fade-enter-from,
+.sheet-fade-leave-to { opacity: 0; }
+
+.sheet-slide-enter-active,
+.sheet-slide-leave-active { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.sheet-slide-enter-from,
+.sheet-slide-leave-to { transform: translateX(-50%) translateY(100%); }
 </style>

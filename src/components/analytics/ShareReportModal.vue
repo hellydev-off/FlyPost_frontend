@@ -17,7 +17,7 @@ onMounted(() => {
 
 function handleDownload(): void {
   const canvas = generateReportCanvas(props.data)
-  const filename = `flypost-report-${props.data.channelUsername || 'channel'}.png`
+  const filename = `neopost-report-${props.data.channelUsername || 'channel'}.png`
   downloadCanvas(canvas, filename)
 }
 </script>

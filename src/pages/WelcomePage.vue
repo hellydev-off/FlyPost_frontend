@@ -11,7 +11,7 @@ const slides = [
     emoji: '🚀',
     gradient: 'linear-gradient(160deg, #1e3a8a 0%, #1d4ed8 50%, #3b82f6 100%)',
     accent: '#93c5fd',
-    title: 'FlyPost',
+    title: 'NeoPost',
     subtitle: 'Ваш AI-помощник\nдля Telegram-каналов',
     desc: 'Создавайте контент, планируйте публикации и управляйте каналами — всё в одном месте',
   },

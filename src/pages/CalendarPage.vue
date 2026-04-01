@@ -10,6 +10,7 @@ import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import WeeklyPlanModal from '@/components/ai/WeeklyPlanModal.vue'
+import DailyPlanModal from '@/components/ai/DailyPlanModal.vue'
 
 const router = useRouter()
 const postsStore = usePostsStore()
@@ -23,6 +24,11 @@ const viewMonth = ref(now.getMonth())
 
 const loading = ref(true)
 const showWeeklyPlan = ref(false)
+const showDailyPlan = ref(false)
+
+const publishedPostsCount = computed(() =>
+  postsStore.posts.filter(p => p.channelId === channelsStore.selectedChannelId && p.status === 'published').length
+)
 
 const MONTHS = [
   'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
@@ -171,21 +177,40 @@ function goToPost(id: string): void {
           Пост
         </AppButton>
       </div>
-      <button
-        class="calendar-page__plan-btn"
-        :class="{ 'calendar-page__plan-btn--locked': !planStore.hasFeature('weeklyPlan') }"
-        :disabled="!channelsStore.selectedChannelId && planStore.hasFeature('weeklyPlan')"
-        @click="planStore.hasFeature('weeklyPlan') ? (showWeeklyPlan = true) : planStore.showPaywall('LIMIT_FEATURE_WEEKLY_PLAN')"
-      >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-          <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>Сгенерировать план на неделю</span>
-        <span v-if="!planStore.hasFeature('weeklyPlan')" class="calendar-page__plan-lock">PRO</span>
-        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="m9 18 6-6-6-6" stroke="var(--fp-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </button>
+      <div class="calendar-page__plan-btns">
+        <button
+          class="calendar-page__plan-btn"
+          :class="{ 'calendar-page__plan-btn--locked': !planStore.hasFeature('weeklyPlan') }"
+          :disabled="!channelsStore.selectedChannelId && planStore.hasFeature('weeklyPlan')"
+          @click="planStore.hasFeature('weeklyPlan') ? (showDailyPlan = true) : planStore.showPaywall('LIMIT_FEATURE_WEEKLY_PLAN')"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2v10l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          <span>План на день</span>
+          <span v-if="!planStore.hasFeature('weeklyPlan')" class="calendar-page__plan-lock">PRO</span>
+          <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="m9 18 6-6-6-6" stroke="var(--fp-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <button
+          class="calendar-page__plan-btn"
+          :class="{ 'calendar-page__plan-btn--locked': !planStore.hasFeature('weeklyPlan') }"
+          :disabled="!channelsStore.selectedChannelId && planStore.hasFeature('weeklyPlan')"
+          @click="planStore.hasFeature('weeklyPlan') ? (showWeeklyPlan = true) : planStore.showPaywall('LIMIT_FEATURE_WEEKLY_PLAN')"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>План на неделю</span>
+          <span v-if="!planStore.hasFeature('weeklyPlan')" class="calendar-page__plan-lock">PRO</span>
+          <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="m9 18 6-6-6-6" stroke="var(--fp-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <template v-if="loading">
@@ -277,6 +302,13 @@ function goToPost(id: string): void {
       </div>
     </template>
 
+    <DailyPlanModal
+      v-if="showDailyPlan && channelsStore.selectedChannelId"
+      :channel-id="channelsStore.selectedChannelId"
+      :published-posts-count="publishedPostsCount"
+      @close="showDailyPlan = false"
+    />
+
     <WeeklyPlanModal
       v-if="showWeeklyPlan && channelsStore.selectedChannelId"
       :channel-id="channelsStore.selectedChannelId"
@@ -302,6 +334,12 @@ function goToPost(id: string): void {
   font-size: 24px;
   font-weight: 700;
   color: var(--fp-text);
+}
+
+.calendar-page__plan-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .calendar-page__plan-btn {

@@ -30,7 +30,7 @@ function onSubmit(): void {
       <div class="add-channel__hint">
         <div class="add-channel__step">
           <span class="add-channel__step-num">1</span>
-          <span>Добавьте бота <strong>@flypost_bot</strong> как администратора канала</span>
+          <span>Добавьте бота <strong>@neopost_bot</strong> как администратора канала</span>
         </div>
         <div class="add-channel__step">
           <span class="add-channel__step-num">2</span>

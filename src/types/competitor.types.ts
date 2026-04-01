@@ -17,3 +17,18 @@ export interface WeeklyPlanIdea {
   summary: string
   suggestedHour: number
 }
+
+export interface DailyPlanIdea {
+  title: string
+  summary: string
+  scheduledTime: string // "09:00"
+}
+
+export interface AiPlan {
+  id: string
+  channelId: string
+  type: 'daily' | 'weekly'
+  ideas: (DailyPlanIdea | WeeklyPlanIdea)[]
+  warning: string | null
+  createdAt: string
+}

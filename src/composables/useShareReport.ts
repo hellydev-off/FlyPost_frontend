@@ -106,9 +106,9 @@ export function generateReportCanvas(data: ShareReportData): HTMLCanvasElement {
   // --- Брендинг (верх слева) ---
   ctx.fillStyle = C.primary
   ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-  ctx.fillText('fly', PAD, 50)
+  ctx.fillText('Neo', PAD, 50)
   ctx.fillStyle = C.text
-  ctx.fillText('Post', PAD + ctx.measureText('fly').width, 50)
+  ctx.fillText('Post', PAD + ctx.measureText('Neo').width, 50)
 
   // Дата (верх справа)
   const dateStr = new Date().toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
@@ -234,7 +234,7 @@ export function generateReportCanvas(data: ShareReportData): HTMLCanvasElement {
   // --- Нижний брендинг ---
   ctx.fillStyle = C.textTert
   ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
-  ctx.fillText('flypost.app', PAD, H - 22)
+  ctx.fillText('neopost.app', PAD, H - 22)
 
   // Декоративный градиент справа снизу
   const decoGrad = ctx.createRadialGradient(W, H, 0, W, H, 250)

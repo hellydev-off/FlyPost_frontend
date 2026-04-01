@@ -41,6 +41,7 @@ watchEffect(() => {
 @import '@/styles/global.css';
 
 #app.app--guest {
+  padding-top: var(--fp-spacing);
   padding-bottom: var(--fp-spacing);
 }
 </style>
