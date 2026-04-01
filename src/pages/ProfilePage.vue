@@ -131,6 +131,12 @@ function doLogout(): void {
   auth.logout()
   router.replace({ name: 'welcome' })
 }
+
+function clearAndLogout(): void {
+  localStorage.clear()
+  sessionStorage.clear()
+  router.replace({ name: 'welcome' })
+}
 </script>
 
 <template>
@@ -299,6 +305,16 @@ function doLogout(): void {
         </AppButton>
       </div>
     </template>
+
+    <!-- Ошибка загрузки профиля — dev-кнопка очистки -->
+    <div v-else-if="!loading" class="profile__error">
+      <AppIcon name="alert-circle" :size="40" color="var(--fp-text-tertiary)" />
+      <p>Не удалось загрузить профиль</p>
+      <AppButton variant="danger" @click="clearAndLogout">
+        <AppIcon name="trash" :size="16" />
+        Очистить данные и выйти
+      </AppButton>
+    </div>
 
     <!-- Password Modal -->
     <AppModal v-if="showPasswordModal" title="Сменить пароль" @close="showPasswordModal = false">
@@ -624,5 +640,20 @@ function doLogout(): void {
   font-size: 12px;
   color: var(--fp-text-secondary);
   margin-top: 2px;
+}
+
+/* Dev error state */
+.profile__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 60px 0;
+  text-align: center;
+}
+
+.profile__error p {
+  font-size: 15px;
+  color: var(--fp-text-secondary);
 }
 </style>
