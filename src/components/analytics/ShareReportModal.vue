@@ -55,16 +55,21 @@ function handleDownload(): void {
   border-radius: var(--fp-radius);
   overflow: hidden;
   margin-bottom: 16px;
-  background: #0f172a;
+  background: #06080F;
+  max-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .share-report__img {
   width: 100%;
   display: block;
+  border-radius: var(--fp-radius);
 }
 
 .share-report__placeholder {
-  height: 140px;
+  height: 260px;
 }
 
 .share-report__btn {

@@ -40,13 +40,13 @@ const confirmPassword = ref('')
 const changingPassword = ref(false)
 
 const initials = computed(() => {
-  if (!profile.value) return '?'
+  if (!profile.value?.firstName) return '?'
   return profile.value.firstName
     .split(' ')
-    .map(w => w[0])
+    .map(w => w[0] ?? '')
     .join('')
     .toUpperCase()
-    .slice(0, 2)
+    .slice(0, 2) || '?'
 })
 
 const memberSince = computed(() => {
