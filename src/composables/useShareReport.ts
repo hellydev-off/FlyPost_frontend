@@ -7,9 +7,25 @@ export interface ShareReportData {
   healthScore: number | null
 }
 
-const W = 600
-const H = 900
-const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+const W = 720
+const H = 1280
+const FONT = 'SF Pro Display, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+
+function fmtNum(n: number | null): string {
+  if (n === null) return '—'
+  if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
+  if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1) + 'K'
+  return String(n)
+}
+
+function fmtGrowth(n: number | null): string {
+  if (n === null) return '—'
+  return (n >= 0 ? '+' : '') + fmtNum(n)
+}
+
+function getInitials(title: string): string {
+  return title.split(/\s+/).map(w => w[0] ?? '').join('').toUpperCase().slice(0, 2) || '?'
+}
 
 function roundRect(
   ctx: CanvasRenderingContext2D,
@@ -30,366 +46,282 @@ function roundRect(
   ctx.closePath()
 }
 
-function fmtNum(n: number | null): string {
-  if (n === null) return '—'
-  if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
-  if (Math.abs(n) >= 1_000) return (n / 1_000).toFixed(1) + 'K'
-  return String(n)
-}
-
-function fmtGrowth(n: number | null): string {
-  if (n === null) return '—'
-  return (n >= 0 ? '+' : '') + fmtNum(n)
-}
-
-function scoreColors(score: number): { main: string; glow: string; grad: string } {
-  if (score >= 70) return { main: '#10B981', glow: 'rgba(16,185,129,0.45)', grad: '#34D399' }
-  if (score >= 40) return { main: '#F59E0B', glow: 'rgba(245,158,11,0.45)', grad: '#FCD34D' }
-  return { main: '#EF4444', glow: 'rgba(239,68,68,0.45)', grad: '#F87171' }
-}
-
-function scoreLabel(score: number): string {
-  if (score >= 70) return 'Отлично'
-  if (score >= 40) return 'Хорошо'
-  return 'Требует внимания'
-}
-
-function getInitials(title: string): string {
-  return title.split(/\s+/).map(w => w[0] ?? '').join('').toUpperCase().slice(0, 2)
-}
-
 export function generateReportCanvas(data: ShareReportData): HTMLCanvasElement {
   const canvas = document.createElement('canvas')
   canvas.width = W
   canvas.height = H
   const ctx = canvas.getContext('2d')!
 
-  // ─── Background ───────────────────────────────────────────────
-  const bgGrad = ctx.createLinearGradient(0, 0, W * 0.6, H)
-  bgGrad.addColorStop(0, '#06080F')
-  bgGrad.addColorStop(1, '#0C1020')
-  ctx.fillStyle = bgGrad
+  // ─── ФОНОВЫЙ ГРАДИЕНТ — синий как на примере ────────────────
+  const bg = ctx.createLinearGradient(0, 0, W * 0.4, H)
+  bg.addColorStop(0, '#1A3ADB')
+  bg.addColorStop(0.4, '#2E4FE8')
+  bg.addColorStop(0.75, '#3B6CF5')
+  bg.addColorStop(1, '#4DBCFF')
+  ctx.fillStyle = bg
   ctx.fillRect(0, 0, W, H)
 
-  // ─── Декоративные блобы ───────────────────────────────────────
-  // Фиолетовый — правый верх
-  const blobPurple = ctx.createRadialGradient(W, 30, 0, W, 30, 400)
-  blobPurple.addColorStop(0, 'rgba(139,92,246,0.50)')
-  blobPurple.addColorStop(0.5, 'rgba(99,102,241,0.18)')
-  blobPurple.addColorStop(1, 'rgba(99,102,241,0)')
-  ctx.fillStyle = blobPurple
+  // Лёгкий оверлей для глубины
+  const ov = ctx.createRadialGradient(W * 0.8, H * 0.15, 0, W * 0.8, H * 0.15, 600)
+  ov.addColorStop(0, 'rgba(120,160,255,0.35)')
+  ov.addColorStop(1, 'rgba(0,0,0,0)')
+  ctx.fillStyle = ov
   ctx.fillRect(0, 0, W, H)
 
-  // Голубой — левый низ
-  const blobCyan = ctx.createRadialGradient(0, H, 0, 0, H, 360)
-  blobCyan.addColorStop(0, 'rgba(34,211,238,0.30)')
-  blobCyan.addColorStop(0.5, 'rgba(59,130,246,0.12)')
-  blobCyan.addColorStop(1, 'rgba(59,130,246,0)')
-  ctx.fillStyle = blobCyan
+  const ov2 = ctx.createRadialGradient(0, H, 0, 0, H, 500)
+  ov2.addColorStop(0, 'rgba(30,100,220,0.5)')
+  ov2.addColorStop(1, 'rgba(0,0,0,0)')
+  ctx.fillStyle = ov2
   ctx.fillRect(0, 0, W, H)
 
-  // Синий — центр
-  const blobMid = ctx.createRadialGradient(W * 0.15, H * 0.5, 0, W * 0.15, H * 0.5, 240)
-  blobMid.addColorStop(0, 'rgba(79,70,229,0.20)')
-  blobMid.addColorStop(1, 'rgba(79,70,229,0)')
-  ctx.fillStyle = blobMid
-  ctx.fillRect(0, 0, W, H)
+  // ─── ДАТА ВВЕРХУ ────────────────────────────────────────────
+  const month = new Date().toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })
+  const monthCap = month.charAt(0).toUpperCase() + month.slice(1)
+  ctx.textAlign = 'center'
+  ctx.fillStyle = 'rgba(255,255,255,0.70)'
+  ctx.font = `500 30px ${FONT}`
+  ctx.fillText(monthCap, W / 2, 88)
 
-  // ─── Точечная сетка ───────────────────────────────────────────
-  ctx.fillStyle = 'rgba(255,255,255,0.020)'
-  for (let gx = 18; gx < W; gx += 26) {
-    for (let gy = 18; gy < H; gy += 26) {
-      ctx.beginPath()
-      ctx.arc(gx, gy, 1, 0, Math.PI * 2)
-      ctx.fill()
-    }
+  // ─── ЗАГОЛОВОК ──────────────────────────────────────────────
+  ctx.textAlign = 'center'
+  ctx.fillStyle = '#FFFFFF'
+  ctx.font = `bold 72px ${FONT}`
+  ctx.fillText('Отчёт за месяц', W / 2, 196)
+
+  // ─── РАЗДЕЛИТЕЛЬ ────────────────────────────────────────────
+  const div1 = ctx.createLinearGradient(80, 0, W - 80, 0)
+  div1.addColorStop(0, 'rgba(255,255,255,0)')
+  div1.addColorStop(0.5, 'rgba(255,255,255,0.40)')
+  div1.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = div1
+  ctx.fillRect(80, 226, W - 160, 1.5)
+
+  // ─── БЛОК: ПОДПИСЧИКИ ───────────────────────────────────────
+  const isGrowthPos = data.growth7d === null || data.growth7d >= 0
+  const subsValue = fmtNum(data.subscriberCount)
+
+  // Иконка-человечек (svg-path руками)
+  ctx.save()
+  ctx.translate(W / 2 + 20 + ctx.measureText(subsValue).width / 2 + 10, 336)
+  ctx.fillStyle = 'rgba(255,255,255,0.55)'
+  ctx.beginPath(); ctx.arc(18, 0, 18, 0, Math.PI * 2); ctx.fill()
+  ctx.beginPath()
+  ctx.arc(18, 0, 18, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  ctx.textAlign = 'center'
+  ctx.font = `bold 130px ${FONT}`
+  ctx.fillStyle = '#FFFFFF'
+  ctx.shadowColor = 'rgba(0,0,100,0.25)'
+  ctx.shadowBlur = 20
+  ctx.fillText(subsValue, W / 2, 380)
+  ctx.shadowBlur = 0
+
+  ctx.font = `700 38px ${FONT}`
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'
+  ctx.fillText('Подписчиков', W / 2, 436)
+
+  // ─── РАЗДЕЛИТЕЛЬ ────────────────────────────────────────────
+  const div2 = ctx.createLinearGradient(80, 0, W - 80, 0)
+  div2.addColorStop(0, 'rgba(255,255,255,0)')
+  div2.addColorStop(0.5, 'rgba(255,255,255,0.35)')
+  div2.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = div2
+  ctx.fillRect(80, 468, W - 160, 1.5)
+
+  // ─── БЛОК: ПОСТЫ ────────────────────────────────────────────
+  ctx.textAlign = 'center'
+  ctx.font = `bold 130px ${FONT}`
+
+  // Голубой/циановый цвет как на скриншоте
+  const postsGrad = ctx.createLinearGradient(0, 480, 0, 620)
+  postsGrad.addColorStop(0, '#5CF0FF')
+  postsGrad.addColorStop(1, '#00D4F5')
+  ctx.fillStyle = postsGrad
+  ctx.shadowColor = 'rgba(0,220,255,0.4)'
+  ctx.shadowBlur = 30
+  ctx.fillText(String(data.published), W / 2, 620)
+  ctx.shadowBlur = 0
+
+  ctx.font = `700 38px ${FONT}`
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'
+  ctx.fillText('Постов опубликовано', W / 2, 676)
+
+  // ─── РАЗДЕЛИТЕЛЬ ────────────────────────────────────────────
+  const div3 = ctx.createLinearGradient(80, 0, W - 80, 0)
+  div3.addColorStop(0, 'rgba(255,255,255,0)')
+  div3.addColorStop(0.5, 'rgba(255,255,255,0.35)')
+  div3.addColorStop(1, 'rgba(255,255,255,0)')
+  ctx.fillStyle = div3
+  ctx.fillRect(80, 710, W - 160, 1.5)
+
+  // ─── БЕЙДЖ РОСТА ────────────────────────────────────────────
+  const growthTxt = fmtGrowth(data.growth7d) + ' за 7 дней'
+  ctx.font = `600 30px ${FONT}`
+  const bw = ctx.measureText(growthTxt).width + 64
+  const bx = (W - bw) / 2
+
+  roundRect(ctx, bx, 740, bw, 62, 31)
+  ctx.fillStyle = isGrowthPos
+    ? 'rgba(100,255,200,0.18)'
+    : 'rgba(255,100,100,0.18)'
+  ctx.fill()
+  ctx.strokeStyle = isGrowthPos ? 'rgba(100,255,200,0.60)' : 'rgba(255,120,120,0.60)'
+  ctx.lineWidth = 1.5
+  roundRect(ctx, bx, 740, bw, 62, 31)
+  ctx.stroke()
+
+  ctx.textAlign = 'center'
+  ctx.fillStyle = isGrowthPos ? '#7FFFD4' : '#FF8FA3'
+  ctx.font = `600 30px ${FONT}`
+  ctx.fillText(growthTxt, W / 2, 781)
+
+  // ─── HEALTH SCORE (если есть) ────────────────────────────────
+  if (data.healthScore !== null) {
+    const hs = data.healthScore
+    const hc = hs >= 70 ? '#7FFFD4' : hs >= 40 ? '#FFD97D' : '#FF8FA3'
+    ctx.font = `500 28px ${FONT}`
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'
+    ctx.textAlign = 'center'
+    ctx.fillText('Здоровье канала', W / 2, 858)
+
+    // Прогресс-бар
+    const barX = 80; const barY = 878; const barW = W - 160; const barH = 16
+    roundRect(ctx, barX, barY, barW, barH, 8)
+    ctx.fillStyle = 'rgba(255,255,255,0.15)'
+    ctx.fill()
+
+    const fill = Math.round((hs / 100) * barW)
+    const fillGrad = ctx.createLinearGradient(barX, 0, barX + fill, 0)
+    fillGrad.addColorStop(0, hc)
+    fillGrad.addColorStop(1, hc + 'AA')
+    roundRect(ctx, barX, barY, fill, barH, 8)
+    ctx.fillStyle = fillGrad
+    ctx.shadowColor = hc
+    ctx.shadowBlur = 12
+    ctx.fill()
+    ctx.shadowBlur = 0
+
+    ctx.font = `bold 36px ${FONT}`
+    ctx.fillStyle = hc
+    ctx.fillText(String(hs) + ' / 100', W / 2, 946)
   }
 
-  // ─── Декоративные кольца вокруг аватара ──────────────────────
-  const avatarCX = W / 2
-  const avatarCY = 178
-  const avatarR = 60
-  ;[130, 106].forEach((r, i) => {
+  // ─── КОНФЕТТИ ───────────────────────────────────────────────
+  const confettiColors = ['#FFD700','#FF6B6B','#7FFFD4','#FF9FF3','#54A0FF','#5CF0FF','#FFEAA7','#A29BFE']
+  const confettiShapes = ['rect','circle','rect','ribbon'] as const
+  const rng = (min: number, max: number) => min + Math.random() * (max - min)
+
+  for (let i = 0; i < 62; i++) {
+    const cx = rng(30, W - 30)
+    const cy = rng(30, H - 80)
+    const color = confettiColors[Math.floor(Math.random() * confettiColors.length)]
+    const shape = confettiShapes[Math.floor(Math.random() * confettiShapes.length)]
+    const angle = rng(-Math.PI, Math.PI)
+    const size = rng(7, 18)
+    const alpha = rng(0.45, 0.92)
+
+    ctx.save()
+    ctx.translate(cx, cy)
+    ctx.rotate(angle)
+    ctx.globalAlpha = alpha
+    ctx.fillStyle = color
+
+    if (shape === 'circle') {
+      ctx.beginPath()
+      ctx.arc(0, 0, size / 2, 0, Math.PI * 2)
+      ctx.fill()
+    } else if (shape === 'ribbon') {
+      // Тонкая длинная полоска-змейка
+      ctx.beginPath()
+      ctx.moveTo(-size * 1.8, 0)
+      for (let s = -size * 1.8; s <= size * 1.8; s += 3) {
+        ctx.lineTo(s, Math.sin(s * 0.5) * size * 0.5)
+      }
+      ctx.lineWidth = 3.5
+      ctx.strokeStyle = color
+      ctx.globalAlpha = alpha
+      ctx.stroke()
+    } else {
+      ctx.fillRect(-size / 2, -size / 4, size, size / 2)
+    }
+
+    ctx.restore()
+    ctx.globalAlpha = 1
+  }
+
+  // ─── ЗМЕЙКИ / ВОЛНИСТЫЕ ЛИНИИ ───────────────────────────────
+  const snakeColors = ['rgba(255,255,255,0.22)', 'rgba(92,240,255,0.28)', 'rgba(255,215,0,0.20)']
+  const snakes = [
+    { x: 30, y: 520, amp: 18, freq: 0.08, len: 180, col: snakeColors[0] },
+    { x: W - 210, y: 310, amp: 14, freq: 0.10, len: 160, col: snakeColors[1] },
+    { x: 20, y: 860, amp: 20, freq: 0.07, len: 200, col: snakeColors[2] },
+    { x: W - 180, y: 680, amp: 12, freq: 0.12, len: 140, col: snakeColors[0] },
+  ]
+
+  snakes.forEach(s => {
     ctx.beginPath()
-    ctx.arc(avatarCX, avatarCY, r, 0, Math.PI * 2)
-    ctx.strokeStyle = `rgba(139,92,246,${i === 0 ? 0.10 : 0.07})`
-    ctx.lineWidth = 1
+    ctx.moveTo(s.x, s.y)
+    for (let t = 0; t <= s.len; t += 2) {
+      ctx.lineTo(s.x + t, s.y + Math.sin(t * s.freq) * s.amp)
+    }
+    ctx.strokeStyle = s.col
+    ctx.lineWidth = 3
+    ctx.lineCap = 'round'
     ctx.stroke()
   })
 
-  // ─── Верхняя полоска ─────────────────────────────────────────
-  const topBar = ctx.createLinearGradient(0, 0, W, 0)
-  topBar.addColorStop(0, 'rgba(139,92,246,0)')
-  topBar.addColorStop(0.35, '#8B5CF6')
-  topBar.addColorStop(0.65, '#6366F1')
-  topBar.addColorStop(1, 'rgba(99,102,241,0)')
-  ctx.fillStyle = topBar
-  ctx.fillRect(0, 0, W, 3)
+  // ─── СТРЕЛКИ ─────────────────────────────────────────────────
+  const drawArrow = (x: number, y: number, angle: number, size: number, color: string, alpha: number) => {
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.rotate(angle)
+    ctx.globalAlpha = alpha
+    ctx.strokeStyle = color
+    ctx.lineWidth = 3.5
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.beginPath()
+    ctx.moveTo(-size, 0)
+    ctx.lineTo(size, 0)
+    ctx.moveTo(size * 0.45, -size * 0.45)
+    ctx.lineTo(size, 0)
+    ctx.lineTo(size * 0.45, size * 0.45)
+    ctx.stroke()
+    ctx.restore()
+    ctx.globalAlpha = 1
+  }
 
-  // Свечение от полоски
-  const topGlow = ctx.createLinearGradient(0, 3, 0, 50)
-  topGlow.addColorStop(0, 'rgba(139,92,246,0.20)')
-  topGlow.addColorStop(1, 'rgba(139,92,246,0)')
-  ctx.fillStyle = topGlow
-  ctx.fillRect(0, 3, W, 47)
+  drawArrow(55,  200, -0.3,  22, 'rgba(255,255,255,0.50)', 0.7)
+  drawArrow(W - 55, 220,  0.25, 22, 'rgba(92,240,255,0.65)', 0.8)
+  drawArrow(42,  700, -0.5,  18, 'rgba(255,215,0,0.55)', 0.65)
+  drawArrow(W - 48, 720,  0.4,  18, 'rgba(255,255,255,0.45)', 0.7)
+  drawArrow(W / 2 - 180, 470, -0.1, 16, 'rgba(255,180,255,0.50)', 0.6)
+  drawArrow(W / 2 + 180, 460,  0.15, 16, 'rgba(92,240,255,0.55)', 0.65)
 
-  // ─── Логотип + дата ──────────────────────────────────────────
-  ctx.textAlign = 'left'
-  ctx.font = `bold 16px ${FONT}`
-  ctx.fillStyle = '#A78BFA'
-  ctx.fillText('Neo', 28, 44)
-  ctx.fillStyle = 'rgba(255,255,255,0.65)'
-  ctx.fillText('Post', 28 + ctx.measureText('Neo').width, 44)
+  // ─── НАЗВАНИЕ КАНАЛА ─────────────────────────────────────────
+  const nameY = data.healthScore !== null ? 1050 : 900
 
-  ctx.textAlign = 'right'
-  ctx.font = `12px ${FONT}`
-  ctx.fillStyle = 'rgba(255,255,255,0.28)'
-  const dateStr = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
-  ctx.fillText(dateStr, W - 28, 44)
-
-  // Разделитель под шапкой
-  const divTop = ctx.createLinearGradient(0, 0, W, 0)
-  divTop.addColorStop(0, 'rgba(139,92,246,0)')
-  divTop.addColorStop(0.3, 'rgba(139,92,246,0.40)')
-  divTop.addColorStop(0.7, 'rgba(99,102,241,0.40)')
-  divTop.addColorStop(1, 'rgba(99,102,241,0)')
-  ctx.fillStyle = divTop
-  ctx.fillRect(0, 56, W, 1)
-
-  // ─── Аватар канала ────────────────────────────────────────────
-  // Glow-кольцо
-  const avatarGlow = ctx.createRadialGradient(avatarCX, avatarCY, avatarR - 6, avatarCX, avatarCY, avatarR + 22)
-  avatarGlow.addColorStop(0, 'rgba(139,92,246,0.40)')
-  avatarGlow.addColorStop(1, 'rgba(139,92,246,0)')
-  ctx.beginPath()
-  ctx.arc(avatarCX, avatarCY, avatarR + 22, 0, Math.PI * 2)
-  ctx.fillStyle = avatarGlow
-  ctx.fill()
-
-  // Аватар
-  const avatarFill = ctx.createLinearGradient(
-    avatarCX - avatarR, avatarCY - avatarR,
-    avatarCX + avatarR, avatarCY + avatarR,
-  )
-  avatarFill.addColorStop(0, '#A78BFA')
-  avatarFill.addColorStop(0.5, '#6366F1')
-  avatarFill.addColorStop(1, '#3B82F6')
-  ctx.beginPath()
-  ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2)
-  ctx.fillStyle = avatarFill
-  ctx.fill()
-
-  // Блик на аватаре
-  const highlight = ctx.createRadialGradient(
-    avatarCX - 16, avatarCY - 18, 0,
-    avatarCX - 16, avatarCY - 18, avatarR * 0.85,
-  )
-  highlight.addColorStop(0, 'rgba(255,255,255,0.22)')
-  highlight.addColorStop(1, 'rgba(255,255,255,0)')
-  ctx.beginPath()
-  ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2)
-  ctx.fillStyle = highlight
-  ctx.fill()
-
-  // Буквы
   ctx.textAlign = 'center'
-  ctx.fillStyle = '#fff'
-  ctx.font = `bold 36px ${FONT}`
-  ctx.fillText(getInitials(data.channelTitle), avatarCX, avatarCY + 13)
-
-  // ─── Название и username ──────────────────────────────────────
-  ctx.textAlign = 'center'
-  ctx.fillStyle = '#F8FAFC'
-  ctx.font = `bold 27px ${FONT}`
+  ctx.font = `bold 58px ${FONT}`
+  ctx.fillStyle = '#FFFFFF'
+  ctx.shadowColor = 'rgba(0,0,80,0.3)'
+  ctx.shadowBlur = 12
   let title = data.channelTitle
-  while (ctx.measureText(title).width > W - 72 && title.length > 4) title = title.slice(0, -1)
+  while (ctx.measureText(title).width > W - 100 && title.length > 3) title = title.slice(0, -1)
   if (title !== data.channelTitle) title += '…'
-  ctx.fillText(title, W / 2, 270)
-
-  ctx.fillStyle = 'rgba(167,139,250,0.85)'
-  ctx.font = `500 14px ${FONT}`
-  ctx.fillText('@' + data.channelUsername, W / 2, 294)
-
-  // ─── Плитка подписчиков ───────────────────────────────────────
-  const pillW = 230
-  const pillH = 84
-  const pillX = (W - pillW) / 2
-  const pillY = 318
-
-  roundRect(ctx, pillX, pillY, pillW, pillH, 22)
-  ctx.fillStyle = 'rgba(255,255,255,0.05)'
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(255,255,255,0.09)'
-  ctx.lineWidth = 1
-  roundRect(ctx, pillX, pillY, pillW, pillH, 22)
-  ctx.stroke()
-
-  ctx.textAlign = 'center'
-  ctx.shadowColor = 'rgba(99,102,241,0.70)'
-  ctx.shadowBlur = 22
-  ctx.fillStyle = '#F8FAFC'
-  ctx.font = `bold 38px ${FONT}`
-  ctx.fillText(fmtNum(data.subscriberCount), W / 2, pillY + 47)
+  ctx.fillText(title, W / 2, nameY)
   ctx.shadowBlur = 0
 
-  ctx.fillStyle = 'rgba(255,255,255,0.38)'
-  ctx.font = `12px ${FONT}`
-  ctx.fillText('подписчиков', W / 2, pillY + 68)
+  ctx.font = `500 28px ${FONT}`
+  ctx.fillStyle = 'rgba(255,255,255,0.65)'
+  ctx.fillText(data.channelUsername, W / 2, nameY + 52)
 
-  // ─── Бейдж роста ─────────────────────────────────────────────
-  const isPos = data.growth7d === null || data.growth7d >= 0
-  const growthMain = data.growth7d === null ? '#94A3B8' : isPos ? '#10B981' : '#EF4444'
-  const growthBg = data.growth7d === null
-    ? 'rgba(148,163,184,0.12)'
-    : isPos ? 'rgba(16,185,129,0.14)' : 'rgba(239,68,68,0.14)'
-
-  const badgeLabel = `${fmtGrowth(data.growth7d)}  за 7 дней`
-  ctx.font = `600 13px ${FONT}`
-  const badgeW = ctx.measureText(badgeLabel).width + 36
-  const badgeX = (W - badgeW) / 2
-  const badgeY = 422
-
-  roundRect(ctx, badgeX, badgeY, badgeW, 34, 17)
-  ctx.fillStyle = growthBg
-  ctx.fill()
-  ctx.strokeStyle = growthMain + '55'
-  ctx.lineWidth = 1
-  roundRect(ctx, badgeX, badgeY, badgeW, 34, 17)
-  ctx.stroke()
-
-  ctx.textAlign = 'center'
-  ctx.fillStyle = growthMain
-  ctx.font = `600 13px ${FONT}`
-  ctx.fillText(badgeLabel, W / 2, badgeY + 22)
-
-  // ─── Health score arc ─────────────────────────────────────────
-  if (data.healthScore !== null) {
-    const hs = data.healthScore
-    const { main, glow, grad } = scoreColors(hs)
-
-    // Заголовок секции
-    ctx.textAlign = 'center'
-    ctx.fillStyle = 'rgba(255,255,255,0.28)'
-    ctx.font = `600 11px ${FONT}`
-    ctx.fillText('ЗДОРОВЬЕ КАНАЛА', W / 2, 490)
-
-    const arcCX = W / 2
-    const arcCY = 580
-    const arcR = 88
-    const arcStart = Math.PI * 0.78
-    const arcEnd   = Math.PI * 2.22
-
-    // Glow-подложка за дугой
-    const arcGlow = ctx.createRadialGradient(arcCX, arcCY, arcR - 20, arcCX, arcCY, arcR + 30)
-    arcGlow.addColorStop(0, glow)
-    arcGlow.addColorStop(1, 'rgba(0,0,0,0)')
-    ctx.beginPath()
-    ctx.arc(arcCX, arcCY, arcR + 30, 0, Math.PI * 2)
-    ctx.fillStyle = arcGlow
-    ctx.fill()
-
-    // Трек дуги (фон)
-    ctx.beginPath()
-    ctx.arc(arcCX, arcCY, arcR, arcStart, arcEnd)
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)'
-    ctx.lineWidth = 16
-    ctx.lineCap = 'round'
-    ctx.stroke()
-
-    // Заполненная дуга
-    const fillEnd = arcStart + (arcEnd - arcStart) * (hs / 100)
-    const arcColorGrad = ctx.createLinearGradient(arcCX - arcR, arcCY, arcCX + arcR, arcCY)
-    arcColorGrad.addColorStop(0, main)
-    arcColorGrad.addColorStop(1, grad)
-    ctx.beginPath()
-    ctx.arc(arcCX, arcCY, arcR, arcStart, fillEnd)
-    ctx.strokeStyle = arcColorGrad
-    ctx.lineWidth = 16
-    ctx.lineCap = 'round'
-    ctx.shadowColor = main
-    ctx.shadowBlur = 18
-    ctx.stroke()
-    ctx.shadowBlur = 0
-
-    // Цифра в центре дуги
-    ctx.textAlign = 'center'
-    ctx.shadowColor = glow
-    ctx.shadowBlur = 20
-    ctx.fillStyle = '#F8FAFC'
-    ctx.font = `bold 56px ${FONT}`
-    ctx.fillText(String(hs), arcCX, arcCY + 20)
-    ctx.shadowBlur = 0
-
-    ctx.fillStyle = 'rgba(255,255,255,0.35)'
-    ctx.font = `13px ${FONT}`
-    ctx.fillText('из 100', arcCX, arcCY + 44)
-
-    // Вердикт под дугой
-    ctx.fillStyle = main
-    ctx.font = `700 15px ${FONT}`
-    ctx.fillText(scoreLabel(hs), arcCX, arcCY + arcR + 28)
-  }
-
-  // ─── Карточки статистики ──────────────────────────────────────
-  const cardY = data.healthScore !== null ? 714 : 488
-  const gap = 14
-  const cardW = (W - 28 * 2 - gap) / 2
-  const cardH = 84
-
-  const drawCard = (
-    x: number, y: number, w: number, h: number,
-    value: string, label: string, accentColor: string,
-  ): void => {
-    roundRect(ctx, x, y, w, h, 18)
-    ctx.fillStyle = 'rgba(255,255,255,0.055)'
-    ctx.fill()
-    ctx.strokeStyle = 'rgba(255,255,255,0.09)'
-    ctx.lineWidth = 1
-    roundRect(ctx, x, y, w, h, 18)
-    ctx.stroke()
-
-    // Акцентная линия сверху
-    const accentLine = ctx.createLinearGradient(x, y, x + w * 0.65, y)
-    accentLine.addColorStop(0, accentColor)
-    accentLine.addColorStop(1, 'rgba(0,0,0,0)')
-    ctx.fillStyle = accentLine
-    roundRect(ctx, x, y, w * 0.65, 2.5, 1.5)
-    ctx.fill()
-
-    ctx.textAlign = 'left'
-    ctx.shadowColor = accentColor
-    ctx.shadowBlur = 10
-    ctx.fillStyle = '#F8FAFC'
-    ctx.font = `bold 30px ${FONT}`
-    ctx.fillText(value, x + 18, y + 48)
-    ctx.shadowBlur = 0
-
-    ctx.fillStyle = 'rgba(255,255,255,0.38)'
-    ctx.font = `12px ${FONT}`
-    ctx.fillText(label, x + 18, y + 68)
-  }
-
-  const growthFull = data.growth7d === null || data.growth7d >= 0 ? '#10B981' : '#EF4444'
-  drawCard(28, cardY, cardW, cardH, String(data.published), 'опубликовано', '#8B5CF6')
-  drawCard(28 + cardW + gap, cardY, cardW, cardH, fmtGrowth(data.growth7d), 'прирост за 7 дней', growthFull)
-
-  // ─── Нижняя полоска + брендинг ────────────────────────────────
-  const divBot = ctx.createLinearGradient(0, 0, W, 0)
-  divBot.addColorStop(0, 'rgba(99,102,241,0)')
-  divBot.addColorStop(0.35, 'rgba(99,102,241,0.38)')
-  divBot.addColorStop(0.65, 'rgba(139,92,246,0.38)')
-  divBot.addColorStop(1, 'rgba(139,92,246,0)')
-  ctx.fillStyle = divBot
-  ctx.fillRect(0, H - 72, W, 1)
-
-  ctx.textAlign = 'center'
-  ctx.fillStyle = 'rgba(255,255,255,0.22)'
-  ctx.font = `12px ${FONT}`
-  ctx.fillText('neopost.app', W / 2, H - 42)
-
-  ctx.fillStyle = 'rgba(255,255,255,0.12)'
-  ctx.font = `10px ${FONT}`
-  ctx.fillText('Telegram Channel Analytics', W / 2, H - 22)
+  // ─── НИЖНИЙ БРЕНДИНГ ────────────────────────────────────────
+  ctx.font = `400 24px ${FONT}`
+  ctx.fillStyle = 'rgba(255,255,255,0.28)'
+  ctx.fillText('neopost.app', W / 2, H - 44)
 
   return canvas
 }
