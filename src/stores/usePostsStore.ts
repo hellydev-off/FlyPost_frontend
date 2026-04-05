@@ -3,6 +3,7 @@ import { ref, computed } from 'vue'
 import { postsApi } from '@/api/posts.api'
 import { useToastStore } from './useToastStore'
 import { useAchievementsStore } from './useAchievementsStore'
+import { useLocaleStore } from './useLocaleStore'
 import type { Post, CreatePostPayload, UpdatePostPayload, PostFilters } from '@/types/post.types'
 
 export const usePostsStore = defineStore('posts', () => {
@@ -19,7 +20,7 @@ export const usePostsStore = defineStore('posts', () => {
     try {
       posts.value = await postsApi.getAll(filters)
     } catch {
-      useToastStore().show('Не удалось загрузить посты', 'error')
+      useToastStore().show(useLocaleStore().t('stores.posts.fetchError'), 'error')
     } finally {
       loading.value = false
     }
@@ -30,7 +31,7 @@ export const usePostsStore = defineStore('posts', () => {
     try {
       currentPost.value = await postsApi.getOne(id)
     } catch {
-      useToastStore().show('Пост не найден', 'error')
+      useToastStore().show(useLocaleStore().t('stores.posts.notFound'), 'error')
     } finally {
       loading.value = false
     }
@@ -40,11 +41,11 @@ export const usePostsStore = defineStore('posts', () => {
     try {
       const post = await postsApi.create(payload)
       posts.value.unshift(post)
-      useToastStore().show('Черновик сохранён', 'success')
+      useToastStore().show(useLocaleStore().t('stores.posts.created'), 'success')
       useAchievementsStore().check()
       return post
     } catch {
-      useToastStore().show('Не удалось создать пост', 'error')
+      useToastStore().show(useLocaleStore().t('stores.posts.createError'), 'error')
       return null
     }
   }
@@ -55,9 +56,9 @@ export const usePostsStore = defineStore('posts', () => {
       const idx = posts.value.findIndex(p => p.id === id)
       if (idx !== -1) posts.value[idx] = updated
       if (currentPost.value?.id === id) currentPost.value = updated
-      useToastStore().show('Пост обновлён', 'success')
+      useToastStore().show(useLocaleStore().t('stores.posts.updated'), 'success')
     } catch {
-      useToastStore().show('Не удалось обновить пост', 'error')
+      useToastStore().show(useLocaleStore().t('stores.posts.updateError'), 'error')
     }
   }
 
@@ -67,10 +68,10 @@ export const usePostsStore = defineStore('posts', () => {
       const idx = posts.value.findIndex(p => p.id === id)
       if (idx !== -1) posts.value[idx] = published
       if (currentPost.value?.id === id) currentPost.value = published
-      useToastStore().show('Пост опубликован!', 'success')
+      useToastStore().show(useLocaleStore().t('stores.posts.published'), 'success')
       useAchievementsStore().check()
     } catch {
-      useToastStore().show('Не удалось опубликовать пост', 'error')
+      useToastStore().show(useLocaleStore().t('stores.posts.publishError'), 'error')
     }
   }
 
@@ -79,9 +80,9 @@ export const usePostsStore = defineStore('posts', () => {
       await postsApi.delete(id)
       posts.value = posts.value.filter(p => p.id !== id)
       if (currentPost.value?.id === id) currentPost.value = null
-      useToastStore().show('Пост удалён', 'success')
+      useToastStore().show(useLocaleStore().t('stores.posts.deleted'), 'success')
     } catch {
-      useToastStore().show('Не удалось удалить пост', 'error')
+      useToastStore().show(useLocaleStore().t('stores.posts.deleteError'), 'error')
     }
   }
 

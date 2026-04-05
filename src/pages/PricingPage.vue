@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { usePlanStore } from '@/stores/usePlanStore'
 import { subscriptionApi } from '@/api/subscription.api'
 import { useToastStore } from '@/stores/useToastStore'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import {
   PLAN_META, PLAN_LIMITS, PLAN_PRICES,
   type PlanKey, type PeriodMonths,
@@ -12,29 +13,30 @@ import {
 const router = useRouter()
 const planStore = usePlanStore()
 const toast = useToastStore()
+const { t } = useLocaleStore()
 
 const selectedPeriod = ref<PeriodMonths>(1)
 const loadingPlan = ref<PlanKey | null>(null)
 
-const periods: Array<{ value: PeriodMonths; label: string }> = [
-  { value: 1,  label: '1 мес'  },
-  { value: 3,  label: '3 мес'  },
-  { value: 6,  label: '6 мес'  },
-  { value: 12, label: '12 мес' },
-]
+const periods = computed((): Array<{ value: PeriodMonths; label: string }> => [
+  { value: 1,  label: t('pricing.period1')  },
+  { value: 3,  label: t('pricing.period3')  },
+  { value: 6,  label: t('pricing.period6')  },
+  { value: 12, label: t('pricing.period12') },
+])
 
 const paidPlans: Array<Exclude<PlanKey, 'free'>> = ['start', 'pro', 'max']
 
-const featuresTable = [
-  { key: 'channels',    label: 'Каналов',           svg: `<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.64 3.38 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6.08 6.08l.97-.97a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` },
-  { key: 'scheduled',   label: 'Расписаний',         svg: `<rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>` },
-  { key: 'ai',          label: 'AI-генераций/мес',   svg: `<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>` },
-  { key: 'templates',   label: 'Шаблонов',           svg: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M14 2v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>` },
-  { key: 'analytics',   label: 'Полная аналитика',   svg: `<path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>` },
-  { key: 'competitors', label: 'Конкуренты',         svg: `<circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>` },
-  { key: 'weeklyPlan',  label: 'AI-план на неделю',  svg: `<path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>` },
-  { key: 'voice',       label: 'Голосовой профиль',  svg: `<path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>` },
-]
+const featuresTable = computed(() => [
+  { key: 'channels',    label: t('pricing.featChannels'),    svg: `<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.64 3.38 2 2 0 0 1 3.62 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6.08 6.08l.97-.97a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` },
+  { key: 'scheduled',   label: t('pricing.featScheduled'),   svg: `<rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>` },
+  { key: 'ai',          label: t('pricing.featAi'),          svg: `<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>` },
+  { key: 'templates',   label: t('pricing.featTemplates'),   svg: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M14 2v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>` },
+  { key: 'analytics',   label: t('pricing.featAnalytics'),   svg: `<path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>` },
+  { key: 'competitors', label: t('pricing.featCompetitors'), svg: `<circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>` },
+  { key: 'weeklyPlan',  label: t('pricing.featWeeklyPlan'),  svg: `<path d="M9.663 17h4.673M12 3v1m6.364 1.636-.707.707M21 12h-1M4 12H3m3.343-5.657-.707-.707m2.828 9.9a5 5 0 1 1 7.072 0l-.548.547A3.374 3.374 0 0 0 14 18.469V19a2 2 0 1 1-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>` },
+  { key: 'voice',       label: t('pricing.featVoice'),       svg: `<path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" stroke="currentColor" stroke-width="1.7" fill="none"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>` },
+])
 
 const freeLimits = PLAN_LIMITS.free
 
@@ -82,10 +84,10 @@ async function subscribe(plan: Exclude<PlanKey, 'free'>): Promise<void> {
   try {
     const status = await subscriptionApi.confirmPayment(plan, selectedPeriod.value)
     planStore.status = status
-    toast.show(`Тариф «${PLAN_META[plan].name}» активирован!`, 'success')
+    toast.show(`${t('pricing.plan')} «${t(`planMeta.${plan}.name`)}» ${t('pricing.activatedSuccess')}`, 'success')
     router.back()
   } catch {
-    toast.show('Ошибка при активации тарифа', 'error')
+    toast.show(t('pricing.activateError'), 'error')
   } finally {
     loadingPlan.value = null
   }
@@ -98,10 +100,10 @@ async function downgradeFree(): Promise<void> {
   try {
     const status = await subscriptionApi.downgradeFree()
     planStore.status = status
-    toast.show('Переключено на Free тариф', 'success')
+    toast.show(t('pricing.downgradeSuccess'), 'success')
     router.back()
   } catch {
-    toast.show('Ошибка при смене тарифа', 'error')
+    toast.show(t('pricing.downgradeError'), 'error')
   } finally {
     downgradingFree.value = false
   }
@@ -119,9 +121,9 @@ async function downgradeFree(): Promise<void> {
         </svg>
       </button>
       <div>
-        <h1 class="pricing__title">Тарифы</h1>
+        <h1 class="pricing__title">{{ t('pricing.title') }}</h1>
         <p v-if="planStore.isTrial" class="pricing__trial-note">
-          🎉 Пробный период · {{ planStore.trialDaysLeft }} дн. осталось
+          {{ t('pricing.trialNote', { days: planStore.trialDaysLeft ?? 0 }) }}
         </p>
       </div>
     </div>
@@ -131,7 +133,7 @@ async function downgradeFree(): Promise<void> {
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 3H15M10 3V9L7.5 14M14 9V3M14 9L16.5 14M7.5 14H16.5M7.5 14L6 18H18L16.5 14"/>
       </svg>
-      Тест-режим — тариф активируется мгновенно, без оплаты
+      {{ t('pricing.testBanner') }}
     </div>
 
     <!-- Period toggle -->
@@ -163,10 +165,10 @@ async function downgradeFree(): Promise<void> {
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
             <path d="M20 6L9 17l-5-5" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          Текущий
+          {{ t('pricing.currentBadge') }}
         </div>
         <div v-else-if="plan === 'pro'" class="pricing__badge pricing__badge--popular">
-          ⚡ Популярный
+          {{ t('pricing.popular') }}
         </div>
 
         <!-- Coloured top -->
@@ -198,8 +200,8 @@ async function downgradeFree(): Promise<void> {
           </div>
 
           <div class="pricing__card-label">
-            <h3 class="pricing__card-name">{{ PLAN_META[plan].name }}</h3>
-            <p class="pricing__card-desc">{{ PLAN_META[plan].description }}</p>
+            <h3 class="pricing__card-name">{{ t(`planMeta.${plan}.name`) }}</h3>
+            <p class="pricing__card-desc">{{ t(`planMeta.${plan}.description`) }}</p>
           </div>
 
           <div v-if="getSaving(plan, selectedPeriod)" class="pricing__save-chip">
@@ -211,10 +213,10 @@ async function downgradeFree(): Promise<void> {
         <div class="pricing__price-block">
           <div class="pricing__price">
             <span class="pricing__amount">{{ PLAN_PRICES[plan][selectedPeriod].perMonth.toLocaleString('ru') }}</span>
-            <span class="pricing__unit">₽/мес</span>
+            <span class="pricing__unit">{{ t('pricing.perMonth') }}</span>
           </div>
           <p v-if="selectedPeriod > 1" class="pricing__billing">
-            {{ PLAN_PRICES[plan][selectedPeriod].total.toLocaleString('ru') }} ₽ за {{ selectedPeriod }} мес.
+            {{ PLAN_PRICES[plan][selectedPeriod].total.toLocaleString() }} ₽ / {{ selectedPeriod }} {{ t('pricing.billingMonths') }}
           </p>
         </div>
 
@@ -254,8 +256,8 @@ async function downgradeFree(): Promise<void> {
           @click="subscribe(plan)"
         >
           <span v-if="loadingPlan === plan" class="pricing__spinner" />
-          <template v-else-if="isCurrentPlan(plan)">Текущий тариф ✓</template>
-          <template v-else>Выбрать {{ PLAN_META[plan].name }}</template>
+          <template v-else-if="isCurrentPlan(plan)">{{ t('pricing.currentPlan') }}</template>
+          <template v-else>{{ t('pricing.selectPlan') }} {{ t(`planMeta.${plan}.name`) }}</template>
         </button>
       </div>
     </div>
@@ -274,10 +276,10 @@ async function downgradeFree(): Promise<void> {
         </div>
         <div>
           <h3 class="pricing__free-name">Free</h3>
-          <p class="pricing__free-desc-title">Бесплатно навсегда</p>
+          <p class="pricing__free-desc-title">{{ t('pricing.freeForever') }}</p>
         </div>
         <div class="pricing__free-right">
-          <span v-if="isCurrentPlan('free')" class="pricing__free-current-badge">Текущий</span>
+          <span v-if="isCurrentPlan('free')" class="pricing__free-current-badge">{{ t('pricing.currentBadge') }}</span>
           <span class="pricing__free-price">0 ₽</span>
         </div>
       </div>
@@ -289,7 +291,7 @@ async function downgradeFree(): Promise<void> {
         @click="downgradeFree"
       >
         <span v-if="downgradingFree" class="pricing__spinner" />
-        <template v-else>Перейти на Free</template>
+        <template v-else>{{ t('pricing.downgradeFree') }}</template>
       </button>
 
       <ul class="pricing__feats pricing__feats--free">

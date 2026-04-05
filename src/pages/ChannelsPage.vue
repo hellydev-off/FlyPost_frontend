@@ -9,10 +9,12 @@ import ChannelVoiceModal from '@/components/channels/ChannelVoiceModal.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 
 const channelsStore = useChannelsStore()
 const planStore = usePlanStore()
 const router = useRouter()
+const { t } = useLocaleStore()
 const showAddModal = ref(false)
 const voiceChannelId = ref<string | null>(null)
 
@@ -31,10 +33,10 @@ function onAdd(payload: { telegramChannelId: string; title: string }): void {
 <template>
   <div class="channels-page">
     <div class="channels-page__header">
-      <h1>Каналы</h1>
+      <h1>{{ t('channels.title') }}</h1>
       <AppButton size="sm" @click="showAddModal = true">
         <AppIcon name="plus" :size="16" />
-        Добавить
+        {{ t('channels.add') }}
       </AppButton>
     </div>
 
@@ -57,10 +59,10 @@ function onAdd(payload: { telegramChannelId: string; title: string }): void {
 
     <div v-else class="channels-page__empty">
       <AppIcon name="channels" :size="48" color="var(--fp-text-tertiary)" />
-      <p>Нет подключённых каналов</p>
+      <p>{{ t('channels.empty') }}</p>
       <AppButton @click="showAddModal = true">
         <AppIcon name="plus" :size="18" />
-        Добавить канал
+        {{ t('channels.addFirst') }}
       </AppButton>
     </div>
 

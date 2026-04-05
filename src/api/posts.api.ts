@@ -70,4 +70,19 @@ export const postsApi = {
     if (isMockMode) return withDelay(undefined)
     await api.delete(`/api/posts/${id}`)
   },
+
+  async uploadMedia(id: string, files: File[]): Promise<Post> {
+    const form = new FormData()
+    files.forEach(f => form.append('files', f))
+    const { data } = await api.post<Post>(`/api/posts/${id}/media`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return data
+  },
+
+  async crossPost(id: string, channelIds: string[]): Promise<Post[]> {
+    const { data } = await api.post<Post[]>(`/api/posts/${id}/crosspost`, { channelIds })
+    return data
+  },
+
 }

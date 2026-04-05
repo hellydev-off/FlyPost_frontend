@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useChannelsStore } from './useChannelsStore'
+import { useLocaleStore } from './useLocaleStore'
 import { profileApi } from '@/api/profile.api'
 
 export const useOnboardingStore = defineStore('onboarding', () => {
@@ -11,23 +12,24 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   const scheduledCount = ref(0)
 
   const channelsStore = useChannelsStore()
+  const locale = useLocaleStore()
 
   const steps = computed(() => [
     {
       key: 'channel',
-      label: 'Добавьте Telegram-канал',
+      label: locale.t('onboarding.stepChannel'),
       done: channelsStore.channels.length > 0,
       route: { name: 'channels' },
     },
     {
       key: 'post',
-      label: 'Создайте первый пост',
+      label: locale.t('onboarding.stepPost'),
       done: postsCount.value > 0,
       route: { name: 'post-create' },
     },
     {
       key: 'scheduled',
-      label: 'Запланируйте публикацию',
+      label: locale.t('onboarding.stepScheduled'),
       done: scheduledCount.value > 0,
       route: { name: 'post-create' },
     },

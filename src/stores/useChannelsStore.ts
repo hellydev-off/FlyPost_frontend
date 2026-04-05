@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { channelsApi } from '@/api/channels.api'
 import { useToastStore } from './useToastStore'
+import { useLocaleStore } from './useLocaleStore'
 import type { Channel, CreateChannelPayload } from '@/types/channel.types'
 
 export const useChannelsStore = defineStore('channels', () => {
@@ -21,7 +22,7 @@ export const useChannelsStore = defineStore('channels', () => {
         selectedChannelId.value = channels.value[0].id
       }
     } catch {
-      useToastStore().show('Не удалось загрузить каналы', 'error')
+      useToastStore().show(useLocaleStore().t('stores.channels.fetchError'), 'error')
     } finally {
       loading.value = false
     }
@@ -31,9 +32,9 @@ export const useChannelsStore = defineStore('channels', () => {
     try {
       const channel = await channelsApi.addChannel(payload)
       channels.value.push(channel)
-      useToastStore().show('Канал добавлен', 'success')
+      useToastStore().show(useLocaleStore().t('stores.channels.added'), 'success')
     } catch {
-      useToastStore().show('Не удалось добавить канал', 'error')
+      useToastStore().show(useLocaleStore().t('stores.channels.addError'), 'error')
     }
   }
 
@@ -44,9 +45,9 @@ export const useChannelsStore = defineStore('channels', () => {
       if (selectedChannelId.value === id) {
         selectedChannelId.value = channels.value[0]?.id ?? null
       }
-      useToastStore().show('Канал удалён', 'success')
+      useToastStore().show(useLocaleStore().t('stores.channels.deleted'), 'success')
     } catch {
-      useToastStore().show('Не удалось удалить канал', 'error')
+      useToastStore().show(useLocaleStore().t('stores.channels.deleteError'), 'error')
     }
   }
 

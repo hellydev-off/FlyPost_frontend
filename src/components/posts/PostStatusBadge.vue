@@ -1,22 +1,21 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { PostStatus } from '@/types/post.types'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 
-defineProps<{
+const props = defineProps<{
   status: PostStatus
 }>()
 
-const labels: Record<PostStatus, string> = {
-  draft: 'Черновик',
-  published: 'Опубликован',
-  scheduled: 'Запланирован',
-  failed: 'Ошибка',
-}
+const { t } = useLocaleStore()
+
+const label = computed(() => t(`postStatus.${props.status}`))
 </script>
 
 <template>
   <span class="badge" :class="`badge--${status}`">
     <span class="badge__dot" />
-    {{ labels[status] }}
+    {{ label }}
   </span>
 </template>
 

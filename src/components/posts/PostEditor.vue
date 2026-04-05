@@ -7,6 +7,7 @@ import AppIcon from '@/components/common/AppIcon.vue'
 import { aiApi, type GeneratePayload, type ImproveAction } from '@/api/ai.api'
 import { useToastStore } from '@/stores/useToastStore'
 import { usePlanStore } from '@/stores/usePlanStore'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import TemplatePickerModal from './TemplatePickerModal.vue'
 
 const props = defineProps<{
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 
 const toast = useToastStore()
 const planStore = usePlanStore()
+const { t, messages } = useLocaleStore()
 
 // --- Templates ---
 const showTemplatesModal = ref(false)
@@ -36,18 +38,18 @@ const aiTopic = ref('')
 const aiTone = ref<GeneratePayload['tone']>('neutral')
 const aiLength = ref<GeneratePayload['length']>('medium')
 
-const toneOptions = [
-  { value: 'neutral', label: 'Нейтральный' },
-  { value: 'expert', label: 'Экспертный' },
-  { value: 'friendly', label: 'Дружелюбный' },
-  { value: 'sales', label: 'Продающий' },
-] as const
+const toneOptions = computed(() => [
+  { value: 'neutral', label: t('editor.tones.neutral') },
+  { value: 'expert', label: t('editor.tones.expert') },
+  { value: 'friendly', label: t('editor.tones.friendly') },
+  { value: 'sales', label: t('editor.tones.sales') },
+] as const)
 
-const lengthOptions = [
-  { value: 'short', label: 'Короткий' },
-  { value: 'medium', label: 'Средний' },
-  { value: 'long', label: 'Длинный' },
-] as const
+const lengthOptions = computed(() => [
+  { value: 'short', label: t('editor.lengths.short') },
+  { value: 'medium', label: t('editor.lengths.medium') },
+  { value: 'long', label: t('editor.lengths.long') },
+] as const)
 
 async function generateAi(): Promise<void> {
   if (!aiTopic.value.trim()) return
@@ -63,7 +65,7 @@ async function generateAi(): Promise<void> {
     showAiModal.value = false
     aiTopic.value = ''
   } catch {
-    toast.show('Не удалось сгенерировать текст', 'error')
+    toast.show(t('editor.ai.generateError'), 'error')
   } finally {
     aiLoading.value = false
   }
@@ -72,30 +74,23 @@ async function generateAi(): Promise<void> {
 // --- Improve ---
 const improveLoading = ref<ImproveAction | null>(null)
 const showToneModal = ref(false)
-const improveTone = ref('дружелюбный')
+const improveTone = ref(messages.value.editor.tonePresets[0])
 
 const hasContent = computed(() => props.modelValue.trim().length > 0)
 
-const improveActions: Array<{ action: ImproveAction; icon: string; label: string }> = [
-  { action: 'shorten', icon: 'scissors', label: 'Сократить' },
-  { action: 'expand', icon: 'expand', label: 'Расширить' },
-  { action: 'rephrase', icon: 'refresh', label: 'Перефразировать' },
-  { action: 'fix', icon: 'check', label: 'Исправить' },
-  { action: 'tone', icon: 'mask', label: 'Сменить тон' },
-]
+const improveActions = computed((): Array<{ action: ImproveAction; icon: string; label: string }> => [
+  { action: 'shorten', icon: 'scissors', label: t('editor.improve.shorten') },
+  { action: 'expand', icon: 'expand', label: t('editor.improve.expand') },
+  { action: 'rephrase', icon: 'refresh', label: t('editor.improve.rephrase') },
+  { action: 'fix', icon: 'check', label: t('editor.improve.fix') },
+  { action: 'tone', icon: 'mask', label: t('editor.improve.tone') },
+])
 
-const tonePresets = [
-  'дружелюбный',
-  'экспертный',
-  'продающий',
-  'формальный',
-  'юмористический',
-  'мотивирующий',
-]
+const tonePresets = computed(() => messages.value.editor.tonePresets)
 
 async function runImprove(action: ImproveAction, tone?: string): Promise<void> {
   if (!hasContent.value) {
-    toast.show('Сначала напишите текст', 'error')
+    toast.show(t('editor.ai.noText'), 'error')
     return
   }
   improveLoading.value = action
@@ -107,9 +102,9 @@ async function runImprove(action: ImproveAction, tone?: string): Promise<void> {
     })
     emit('update:modelValue', result.content)
     if (action === 'tone') showToneModal.value = false
-    toast.show('Текст улучшен', 'success')
+    toast.show(t('editor.ai.improved'), 'success')
   } catch {
-    toast.show('Не удалось улучшить текст', 'error')
+    toast.show(t('editor.ai.improveError'), 'error')
   } finally {
     improveLoading.value = null
   }
@@ -128,7 +123,7 @@ function onImproveClick(action: ImproveAction): void {
   <div class="post-editor">
     <AppTextarea
       :model-value="modelValue"
-      placeholder="Текст поста..."
+      :placeholder="t('editor.placeholder')"
       :max-length="4096"
       :rows="8"
       @update:model-value="$emit('update:modelValue', $event)"
@@ -144,7 +139,7 @@ function onImproveClick(action: ImproveAction): void {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
           <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span>Сгенерировать</span>
+        <span>{{ t('editor.generate') }}</span>
         <span v-if="!planStore.canUseAi()" class="ai-toolbar__lock-badge">PRO</span>
       </button>
       <button
@@ -156,7 +151,7 @@ function onImproveClick(action: ImproveAction): void {
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.8" fill="none"/>
           <path d="M14 2v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
         </svg>
-        <span>Шаблоны</span>
+        <span>{{ t('editor.templates') }}</span>
         <span v-if="planStore.limits.templates === 0" class="ai-toolbar__lock-badge">PRO</span>
       </button>
       <span class="ai-toolbar__divider" />
@@ -177,7 +172,7 @@ function onImproveClick(action: ImproveAction): void {
     <!-- Preview -->
     <div v-if="modelValue" class="post-editor__preview">
       <div class="post-editor__preview-header">
-        <span class="post-editor__preview-label">Превью</span>
+        <span class="post-editor__preview-label">{{ t('editor.preview') }}</span>
         <span class="post-editor__char-count">
           {{ modelValue.length }} / 4096
         </span>
@@ -186,19 +181,19 @@ function onImproveClick(action: ImproveAction): void {
     </div>
 
     <!-- Generate modal -->
-    <AppModal v-if="showAiModal" title="AI-генерация" @close="showAiModal = false">
+    <AppModal v-if="showAiModal" :title="t('editor.ai.title')" @close="showAiModal = false">
       <div class="ai-form">
         <div class="ai-form__field">
-          <label class="ai-form__label">Тема поста</label>
+          <label class="ai-form__label">{{ t('editor.ai.topic') }}</label>
           <input
             v-model="aiTopic"
             class="ai-form__input"
-            placeholder="О чём написать?"
+            :placeholder="t('editor.ai.topicPlaceholder')"
           />
         </div>
 
         <div class="ai-form__field">
-          <label class="ai-form__label">Тон</label>
+          <label class="ai-form__label">{{ t('editor.ai.tone') }}</label>
           <div class="ai-form__chips">
             <button
               v-for="opt in toneOptions"
@@ -213,7 +208,7 @@ function onImproveClick(action: ImproveAction): void {
         </div>
 
         <div class="ai-form__field">
-          <label class="ai-form__label">Длина</label>
+          <label class="ai-form__label">{{ t('editor.ai.length') }}</label>
           <div class="ai-form__chips">
             <button
               v-for="opt in lengthOptions"
@@ -233,7 +228,7 @@ function onImproveClick(action: ImproveAction): void {
           :disabled="!aiTopic.trim()"
           @click="generateAi"
         >
-          Сгенерировать
+          {{ t('editor.ai.generate') }}
         </AppButton>
       </div>
     </AppModal>
@@ -246,7 +241,7 @@ function onImproveClick(action: ImproveAction): void {
     />
 
     <!-- Tone modal -->
-    <AppModal v-if="showToneModal" title="Сменить тон" @close="showToneModal = false">
+    <AppModal v-if="showToneModal" :title="t('editor.ai.toneModal')" @close="showToneModal = false">
       <div class="tone-form">
         <div class="tone-form__presets">
           <button
@@ -264,7 +259,7 @@ function onImproveClick(action: ImproveAction): void {
           <input
             v-model="improveTone"
             class="ai-form__input"
-            placeholder="Или введите свой тон..."
+            :placeholder="t('editor.ai.customTonePlaceholder')"
           />
         </div>
 
@@ -274,7 +269,7 @@ function onImproveClick(action: ImproveAction): void {
           :disabled="!improveTone.trim()"
           @click="runImprove('tone', improveTone)"
         >
-          Применить тон
+          {{ t('editor.ai.applyTone') }}
         </AppButton>
       </div>
     </AppModal>

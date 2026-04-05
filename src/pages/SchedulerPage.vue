@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useSchedulerStore } from '@/stores/useSchedulerStore'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import ScheduleCard from '@/components/scheduler/ScheduleCard.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 
 const schedulerStore = useSchedulerStore()
+const { t } = useLocaleStore()
 
 onMounted(() => {
   schedulerStore.fetchScheduled()
@@ -14,7 +16,7 @@ onMounted(() => {
 
 <template>
   <div class="scheduler-page">
-    <h1>Планировщик</h1>
+    <h1>{{ t('scheduler.title') }}</h1>
 
     <template v-if="schedulerStore.loading">
       <div class="scheduler-page__list mt">
@@ -33,7 +35,7 @@ onMounted(() => {
 
     <div v-else class="scheduler-page__empty">
       <AppIcon name="clock" :size="48" color="var(--fp-text-tertiary)" />
-      <p>Нет запланированных публикаций</p>
+      <p>{{ t('scheduler.empty') }}</p>
     </div>
   </div>
 </template>

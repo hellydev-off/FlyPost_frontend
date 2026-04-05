@@ -2,6 +2,7 @@
 import type { ScheduledPost } from '@/types/scheduler.types'
 import { formatDateTime } from '@/utils/formatDate'
 import AppIcon from '@/components/common/AppIcon.vue'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 
 defineProps<{
   item: ScheduledPost
@@ -11,15 +12,17 @@ defineEmits<{
   cancel: [id: string]
 }>()
 
+const { t } = useLocaleStore()
+
 function timeUntil(dateStr: string): string {
   const diff = new Date(dateStr).getTime() - Date.now()
-  if (diff <= 0) return 'сейчас'
+  if (diff <= 0) return t('scheduleCard.now')
   const hours = Math.floor(diff / 3_600_000)
   const days = Math.floor(hours / 24)
-  if (days > 0) return `через ${days} дн.`
-  if (hours > 0) return `через ${hours} ч.`
+  if (days > 0) return t('scheduleCard.inDays', { n: days })
+  if (hours > 0) return t('scheduleCard.inHours', { n: hours })
   const minutes = Math.floor(diff / 60_000)
-  return `через ${minutes} мин.`
+  return t('scheduleCard.inMinutes', { n: minutes })
 }
 </script>
 
@@ -38,7 +41,7 @@ function timeUntil(dateStr: string): string {
       <div class="schedule-card__footer">
         <button class="schedule-card__cancel" @click="$emit('cancel', item.id)">
           <AppIcon name="close" :size="14" />
-          <span>Отменить</span>
+          <span>{{ t('scheduleCard.cancel') }}</span>
         </button>
       </div>
     </div>

@@ -14,6 +14,7 @@ import OnboardingCard from '@/components/home/OnboardingCard.vue'
 import { useOnboardingStore } from '@/stores/useOnboardingStore'
 import { usePlanStore } from '@/stores/usePlanStore'
 import { usePostsStore } from '@/stores/usePostsStore'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import { PLAN_META } from '@/types/plan.types'
 
 const router = useRouter()
@@ -22,6 +23,7 @@ const channelsStore = useChannelsStore()
 const onboarding = useOnboardingStore()
 const planStore = usePlanStore()
 const postsStore = usePostsStore()
+const { t } = useLocaleStore()
 
 const stats = ref<ChannelStats | null>(null)
 const streak = ref<StreakData | null>(null)
@@ -54,9 +56,9 @@ function goToPost(id: string): void {
   <div class="home">
     <div class="home__header">
       <div>
-        <p class="home__label">Добро пожаловать</p>
+        <p class="home__label">{{ t('home.welcome') }}</p>
         <h1 class="home__greeting">
-          {{ auth.user?.firstName ?? 'Пользователь' }}
+          {{ auth.user?.firstName ?? t('home.user') }}
         </h1>
       </div>
       <div class="home__header-right">
@@ -66,8 +68,8 @@ function goToPost(id: string): void {
           @click="router.push({ name: 'pricing' })"
         >
           {{ PLAN_META[planStore.effectivePlan].emoji }}
-          {{ PLAN_META[planStore.effectivePlan].name }}
-          <span v-if="planStore.isTrial" class="home__plan-trial">пробный</span>
+          {{ t(`planMeta.${planStore.effectivePlan}.name`) }}
+          <span v-if="planStore.isTrial" class="home__plan-trial">{{ t('home.trial') }}</span>
         </button>
         <button class="home__avatar" @click="router.push({ name: 'profile' })">
           {{ auth.user?.firstName?.[0]?.toUpperCase() ?? '?' }}
@@ -91,7 +93,7 @@ function goToPost(id: string): void {
           <AppIcon name="fire" :size="18" color="#f59e0b" />
           <span class="home__streak-count">{{ streak.streak }}</span>
           <span class="home__streak-label">
-            {{ streak.streak === 1 ? 'день подряд' : streak.streak < 5 ? 'дня подряд' : 'дней подряд' }}
+            {{ streak.streak === 1 ? t('home.dayStreak1') : streak.streak < 5 ? t('home.dayStreak2') : t('home.dayStreak5') }}
           </span>
         </div>
         <div
@@ -102,24 +104,24 @@ function goToPost(id: string): void {
         >
           <AppIcon name="heart" :size="16" color="currentColor" />
           <span class="home__health-score">{{ healthScore.score }}</span>
-          <span class="home__health-label">здоровье</span>
+          <span class="home__health-label">{{ t('home.health') }}</span>
         </div>
       </div>
 
       <div class="home__stats stagger">
-        <StatsCard label="Всего" :value="stats.total" />
-        <StatsCard label="Опубликовано" :value="stats.published" color="var(--fp-success)" />
-        <StatsCard label="Запланировано" :value="stats.scheduled" color="var(--fp-primary)" />
-        <StatsCard label="Черновики" :value="stats.drafts" />
+        <StatsCard :label="t('home.total')" :value="stats.total" />
+        <StatsCard :label="t('home.published')" :value="stats.published" color="var(--fp-success)" />
+        <StatsCard :label="t('home.scheduled')" :value="stats.scheduled" color="var(--fp-primary)" />
+        <StatsCard :label="t('home.drafts')" :value="stats.drafts" />
       </div>
 
       <AppButton block class="mt" @click="router.push({ name: 'post-create' })">
         <AppIcon name="plus" :size="18" />
-        Создать пост
+        {{ t('home.createPost') }}
       </AppButton>
 
       <div v-if="postsStore.draftPosts.length" class="home__drafts mt">
-        <h2 class="home__section-title">Черновики</h2>
+        <h2 class="home__section-title">{{ t('home.draftsSection') }}</h2>
         <div class="home__drafts-list stagger">
           <div
             v-for="post in postsStore.draftPosts.slice(0, 5)"
@@ -128,14 +130,14 @@ function goToPost(id: string): void {
             @click="goToPost(post.id)"
           >
             <AppIcon name="draft" :size="16" color="var(--fp-text-tertiary)" />
-            <p class="home__draft-text">{{ post.content.slice(0, 80) || 'Пустой черновик' }}</p>
+            <p class="home__draft-text">{{ post.content.slice(0, 80) || t('home.emptyDraft') }}</p>
             <AppIcon name="chevron-right" :size="14" color="var(--fp-text-tertiary)" />
           </div>
         </div>
       </div>
 
       <div v-if="stats.lastPosts.length" class="home__recent mt">
-        <h2 class="home__section-title">Последние посты</h2>
+        <h2 class="home__section-title">{{ t('home.recentPosts') }}</h2>
         <div class="home__posts stagger">
           <PostCard
             v-for="post in stats.lastPosts.slice(0, 3)"
@@ -149,10 +151,10 @@ function goToPost(id: string): void {
 
     <div v-else class="home__empty">
       <AppIcon name="channels" :size="48" color="var(--fp-text-tertiary)" />
-      <p>Добавьте канал, чтобы начать работу</p>
+      <p>{{ t('home.noChannel') }}</p>
       <AppButton @click="router.push({ name: 'channels' })">
         <AppIcon name="plus" :size="18" />
-        Добавить канал
+        {{ t('home.addChannel') }}
       </AppButton>
     </div>
   </div>

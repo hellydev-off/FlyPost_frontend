@@ -2,40 +2,45 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePlanStore } from '@/stores/usePlanStore'
-import { LIMIT_MESSAGES } from '@/types/plan.types'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 
 const router = useRouter()
 const planStore = usePlanStore()
+const { t, messages } = useLocaleStore()
 
 const limitCode = computed(() => planStore.paywallLimitCode ?? '')
-const featureName = computed(() => LIMIT_MESSAGES[limitCode.value] ?? 'Эта функция')
+const featureName = computed(() => {
+  const code = limitCode.value
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (messages.value.limitMessages as any)[code] ?? t('paywall.defaultFeature')
+})
 
-const features = [
+const features = computed(() => [
   {
     svg: `<path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
-    text: 'Безлимитный AI',
+    text: t('paywall.featUnlimitedAi'),
   },
   {
     svg: `<rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
-    text: 'Планировщик',
+    text: t('paywall.featScheduler'),
   },
   {
     svg: `<path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`,
-    text: 'Полная аналитика',
+    text: t('paywall.featAnalytics'),
   },
   {
     svg: `<circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
-    text: 'Анализ конкурентов',
+    text: t('paywall.featCompetitors'),
   },
   {
     svg: `<path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3M8 22h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
-    text: 'Голосовой профиль',
+    text: t('paywall.featVoice'),
   },
   {
     svg: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.8" fill="none"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.8" fill="none"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`,
-    text: 'Безлимит каналов',
+    text: t('paywall.featChannels'),
   },
-]
+])
 
 function goToPricing(): void {
   planStore.hidePaywall()
@@ -60,9 +65,9 @@ function goToPricing(): void {
                 <circle cx="35" cy="16" r="2.5" fill="#FFD700"/>
               </svg>
             </div>
-            <h2 class="pw__title">Нужен тариф выше</h2>
+            <h2 class="pw__title">{{ t('paywall.title') }}</h2>
             <p class="pw__desc">
-              <span class="pw__feat-name">{{ featureName }}</span> — недоступно на вашем тарифе
+              <span class="pw__feat-name">{{ featureName }}</span> — {{ t('paywall.desc') }}
             </p>
           </div>
 
@@ -81,9 +86,9 @@ function goToPricing(): void {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Смотреть тарифы
+            {{ t('paywall.cta') }}
           </button>
-          <button class="pw__skip" @click="planStore.hidePaywall()">Позже</button>
+          <button class="pw__skip" @click="planStore.hidePaywall()">{{ t('paywall.skip') }}</button>
         </div>
       </div>
     </Transition>

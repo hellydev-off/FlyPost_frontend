@@ -5,6 +5,7 @@ import { usePostsStore } from '@/stores/usePostsStore'
 import { useSchedulerStore } from '@/stores/useSchedulerStore'
 import { useChannelsStore } from '@/stores/useChannelsStore'
 import { usePlanStore } from '@/stores/usePlanStore'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import PostStatusBadge from '@/components/posts/PostStatusBadge.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppButton from '@/components/common/AppButton.vue'
@@ -17,6 +18,7 @@ const postsStore = usePostsStore()
 const schedulerStore = useSchedulerStore()
 const channelsStore = useChannelsStore()
 const planStore = usePlanStore()
+const { t, messages } = useLocaleStore()
 
 const now = new Date()
 const viewYear = ref(now.getFullYear())
@@ -30,13 +32,8 @@ const publishedPostsCount = computed(() =>
   postsStore.posts.filter(p => p.channelId === channelsStore.selectedChannelId && p.status === 'published').length
 )
 
-const MONTHS = [
-  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-]
-const WEEKDAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
-
-const monthLabel = computed(() => `${MONTHS[viewMonth.value]} ${viewYear.value}`)
+const monthLabel = computed(() => `${messages.value.calendar.months[viewMonth.value]} ${viewYear.value}`)
+const WEEKDAYS = computed(() => messages.value.calendar.weekdays)
 
 onMounted(async () => {
   await Promise.all([
@@ -171,10 +168,10 @@ function goToPost(id: string): void {
   <div class="calendar-page">
     <div class="calendar-page__header">
       <div class="calendar-page__header-top">
-        <h1>Календарь</h1>
+        <h1>{{ t('calendar.title') }}</h1>
         <AppButton size="sm" @click="router.push({ name: 'post-create' })">
           <AppIcon name="plus" :size="16" />
-          Пост
+          {{ t('calendar.post') }}
         </AppButton>
       </div>
       <div class="calendar-page__plan-btns">
@@ -188,7 +185,7 @@ function goToPost(id: string): void {
             <path d="M12 2v10l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
           </svg>
-          <span>План на день</span>
+          <span>{{ t('calendar.planDay') }}</span>
           <span v-if="!planStore.hasFeature('weeklyPlan')" class="calendar-page__plan-lock">PRO</span>
           <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path d="m9 18 6-6-6-6" stroke="var(--fp-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -204,7 +201,7 @@ function goToPost(id: string): void {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
             <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span>План на неделю</span>
+          <span>{{ t('calendar.planWeek') }}</span>
           <span v-if="!planStore.hasFeature('weeklyPlan')" class="calendar-page__plan-lock">PRO</span>
           <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path d="m9 18 6-6-6-6" stroke="var(--fp-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -264,13 +261,13 @@ function goToPost(id: string): void {
       <!-- Legend -->
       <div class="cal__legend">
         <span class="cal__legend-item">
-          <span class="cal__dot" style="background: var(--fp-success)" /> Опубликовано
+          <span class="cal__dot" style="background: var(--fp-success)" /> {{ t('calendar.legendPublished') }}
         </span>
         <span class="cal__legend-item">
-          <span class="cal__dot" style="background: var(--fp-primary)" /> Запланировано
+          <span class="cal__dot" style="background: var(--fp-primary)" /> {{ t('calendar.legendScheduled') }}
         </span>
         <span class="cal__legend-item">
-          <span class="cal__dot" style="background: var(--fp-text-tertiary)" /> Черновик
+          <span class="cal__dot" style="background: var(--fp-text-tertiary)" /> {{ t('calendar.legendDraft') }}
         </span>
       </div>
 
@@ -298,7 +295,7 @@ function goToPost(id: string): void {
           </div>
         </div>
 
-        <p v-else class="cal__no-events">Нет событий</p>
+        <p v-else class="cal__no-events">{{ t('calendar.noEventsDay') }}</p>
       </div>
     </template>
 

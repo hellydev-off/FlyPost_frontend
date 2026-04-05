@@ -4,12 +4,14 @@ import AppModal from '@/components/common/AppModal.vue'
 import AppInput from '@/components/common/AppInput.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 
 const emit = defineEmits<{
   close: []
   add: [payload: { telegramChannelId: string; title: string }]
 }>()
 
+const { t } = useLocaleStore()
 const title = ref('')
 const username = ref('')
 
@@ -25,22 +27,22 @@ function onSubmit(): void {
 </script>
 
 <template>
-  <AppModal title="Добавить канал" @close="$emit('close')">
+  <AppModal :title="t('channelAdd.title')" @close="$emit('close')">
     <div class="add-channel">
       <div class="add-channel__hint">
         <div class="add-channel__step">
           <span class="add-channel__step-num">1</span>
-          <span>Добавьте бота <strong>@neopost_bot</strong> как администратора канала</span>
+          <span>{{ t('channelAdd.step1') }}</span>
         </div>
         <div class="add-channel__step">
           <span class="add-channel__step-num">2</span>
-          <span>Укажите данные канала ниже</span>
+          <span>{{ t('channelAdd.step2') }}</span>
         </div>
       </div>
-      <AppInput v-model="title" label="Название канала" placeholder="Мой канал" />
-      <AppInput v-model="username" label="Username канала" placeholder="@mychannel" />
+      <AppInput v-model="title" :label="t('channelAdd.titleLabel')" :placeholder="t('channelAdd.titlePlaceholder')" />
+      <AppInput v-model="username" :label="t('channelAdd.usernameLabel')" :placeholder="t('channelAdd.usernamePlaceholder')" />
       <AppButton block :disabled="!title.trim()" @click="onSubmit">
-        Добавить
+        {{ t('channelAdd.submit') }}
       </AppButton>
     </div>
   </AppModal>

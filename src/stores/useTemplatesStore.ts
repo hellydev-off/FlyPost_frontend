@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { templateApi } from '@/api/template.api'
 import { useToastStore } from './useToastStore'
+import { useLocaleStore } from './useLocaleStore'
 import type { Template, CreateTemplatePayload, UpdateTemplatePayload, TemplateCategory } from '@/types/template.types'
 
 export const useTemplatesStore = defineStore('templates', () => {
@@ -20,7 +21,7 @@ export const useTemplatesStore = defineStore('templates', () => {
     try {
       templates.value = await templateApi.getAll()
     } catch {
-      useToastStore().show('Не удалось загрузить шаблоны', 'error')
+      useToastStore().show(useLocaleStore().t('stores.templates.fetchError'), 'error')
     } finally {
       loading.value = false
     }
@@ -30,10 +31,10 @@ export const useTemplatesStore = defineStore('templates', () => {
     try {
       const template = await templateApi.create(payload)
       templates.value.unshift(template)
-      useToastStore().show('Шаблон создан', 'success')
+      useToastStore().show(useLocaleStore().t('stores.templates.created'), 'success')
       return template
     } catch {
-      useToastStore().show('Не удалось создать шаблон', 'error')
+      useToastStore().show(useLocaleStore().t('stores.templates.createError'), 'error')
       return null
     }
   }
@@ -43,9 +44,9 @@ export const useTemplatesStore = defineStore('templates', () => {
       const updated = await templateApi.update(id, payload)
       const idx = templates.value.findIndex(t => t.id === id)
       if (idx !== -1) templates.value[idx] = updated
-      useToastStore().show('Шаблон обновлён', 'success')
+      useToastStore().show(useLocaleStore().t('stores.templates.updated'), 'success')
     } catch {
-      useToastStore().show('Не удалось обновить шаблон', 'error')
+      useToastStore().show(useLocaleStore().t('stores.templates.updateError'), 'error')
     }
   }
 
@@ -53,9 +54,9 @@ export const useTemplatesStore = defineStore('templates', () => {
     try {
       await templateApi.delete(id)
       templates.value = templates.value.filter(t => t.id !== id)
-      useToastStore().show('Шаблон удалён', 'success')
+      useToastStore().show(useLocaleStore().t('stores.templates.deleted'), 'success')
     } catch {
-      useToastStore().show('Не удалось удалить шаблон', 'error')
+      useToastStore().show(useLocaleStore().t('stores.templates.deleteError'), 'error')
     }
   }
 
@@ -63,7 +64,7 @@ export const useTemplatesStore = defineStore('templates', () => {
     try {
       return await templateApi.use(id, variables)
     } catch {
-      useToastStore().show('Не удалось применить шаблон', 'error')
+      useToastStore().show(useLocaleStore().t('stores.templates.applyError'), 'error')
       return null
     }
   }

@@ -8,6 +8,7 @@ import { profileApi, type ProfileData, type ProfileStats } from '@/api/profile.a
 import { useAchievementsStore } from '@/stores/useAchievementsStore'
 import { ACHIEVEMENT_META } from '@/types/achievement.types'
 import { usePlanStore } from '@/stores/usePlanStore'
+import { useLocaleStore, type Locale } from '@/stores/useLocaleStore'
 import { PLAN_META } from '@/types/plan.types'
 import AppButton from '@/components/common/AppButton.vue'
 import AppInput from '@/components/common/AppInput.vue'
@@ -21,6 +22,7 @@ const toast = useToastStore()
 const themeStore = useThemeStore()
 const achievementsStore = useAchievementsStore()
 const planStore = usePlanStore()
+const localeStore = useLocaleStore()
 
 const profile = ref<ProfileData | null>(null)
 const stats = ref<ProfileStats | null>(null)
@@ -31,13 +33,6 @@ const editing = ref(false)
 const editFirstName = ref('')
 const editUsername = ref('')
 const saving = ref(false)
-
-// Password form
-const showPasswordModal = ref(false)
-const currentPassword = ref('')
-const newPassword = ref('')
-const confirmPassword = ref('')
-const changingPassword = ref(false)
 
 const initials = computed(() => {
   if (!profile.value?.firstName) return '?'
@@ -65,7 +60,7 @@ onMounted(async () => {
     profile.value = p
     stats.value = s
   } catch {
-    toast.show('Не удалось загрузить профиль', 'error')
+    toast.show(localeStore.t('profile.profileError'), 'error')
   } finally {
     loading.value = false
   }
@@ -80,7 +75,7 @@ function startEdit(): void {
 
 async function saveEdit(): Promise<void> {
   if (!editFirstName.value.trim()) {
-    toast.show('Введите имя', 'error')
+    toast.show(localeStore.t('profile.nameRequired'), 'error')
     return
   }
   saving.value = true
@@ -95,35 +90,11 @@ async function saveEdit(): Promise<void> {
       localStorage.setItem('fp_user', JSON.stringify(auth.user))
     }
     editing.value = false
-    toast.show('Профиль обновлён', 'success')
+    toast.show(localeStore.t('profile.profileUpdated'), 'success')
   } catch {
-    toast.show('Не удалось сохранить', 'error')
+    toast.show(localeStore.t('profile.saveError'), 'error')
   } finally {
     saving.value = false
-  }
-}
-
-async function savePassword(): Promise<void> {
-  if (newPassword.value.length < 6) {
-    toast.show('Пароль минимум 6 символов', 'error')
-    return
-  }
-  if (newPassword.value !== confirmPassword.value) {
-    toast.show('Пароли не совпадают', 'error')
-    return
-  }
-  changingPassword.value = true
-  try {
-    await profileApi.changePassword(currentPassword.value, newPassword.value)
-    showPasswordModal.value = false
-    currentPassword.value = ''
-    newPassword.value = ''
-    confirmPassword.value = ''
-    toast.show('Пароль изменён', 'success')
-  } catch {
-    toast.show('Неверный текущий пароль', 'error')
-  } finally {
-    changingPassword.value = false
   }
 }
 
@@ -141,7 +112,7 @@ function clearAndLogout(): void {
 
 <template>
   <div class="profile">
-    <h1 class="profile__title">Профиль</h1>
+    <h1 class="profile__title">{{ localeStore.t('profile.title') }}</h1>
 
     <template v-if="loading">
       <AppSkeleton height="160px" class="mt" />
@@ -155,7 +126,6 @@ function clearAndLogout(): void {
         <div class="profile__avatar">{{ initials }}</div>
         <div class="profile__info">
           <h2 class="profile__name">{{ profile.firstName }}</h2>
-          <p v-if="profile.email" class="profile__email">{{ profile.email }}</p>
           <p v-if="profile.username" class="profile__username">@{{ profile.username }}</p>
         </div>
       </div>
@@ -164,75 +134,96 @@ function clearAndLogout(): void {
       <div v-if="stats" class="profile__stats stagger">
         <div class="profile__stat">
           <span class="profile__stat-value">{{ stats.channels }}</span>
-          <span class="profile__stat-label">Каналов</span>
+          <span class="profile__stat-label">{{ localeStore.t('profile.channels') }}</span>
         </div>
         <div class="profile__stat">
           <span class="profile__stat-value">{{ stats.posts }}</span>
-          <span class="profile__stat-label">Постов</span>
+          <span class="profile__stat-label">{{ localeStore.t('profile.posts') }}</span>
         </div>
         <div class="profile__stat">
           <span class="profile__stat-value">{{ stats.published }}</span>
-          <span class="profile__stat-label">Опубликовано</span>
+          <span class="profile__stat-label">{{ localeStore.t('profile.published') }}</span>
         </div>
         <div class="profile__stat">
           <span class="profile__stat-value">{{ stats.scheduled }}</span>
-          <span class="profile__stat-label">Запланировано</span>
+          <span class="profile__stat-label">{{ localeStore.t('profile.scheduled') }}</span>
         </div>
       </div>
 
-      <!-- Theme toggle -->
+      <!-- Appearance -->
       <div class="profile__section">
-        <h3 class="profile__section-title">Оформление</h3>
+        <h3 class="profile__section-title">{{ localeStore.t('profile.appearance') }}</h3>
+
+        <!-- Theme -->
         <div class="profile__theme-toggle" @click="themeStore.toggle()">
           <div class="profile__theme-info">
             <AppIcon :name="themeStore.theme === 'dark' ? 'moon' : 'sun'" :size="20" />
-            <span>{{ themeStore.theme === 'dark' ? 'Тёмная тема' : 'Светлая тема' }}</span>
+            <span>{{ themeStore.theme === 'dark' ? localeStore.t('profile.darkTheme') : localeStore.t('profile.lightTheme') }}</span>
           </div>
           <div class="profile__toggle" :class="{ 'profile__toggle--active': themeStore.theme === 'dark' }">
             <span class="profile__toggle-knob" />
+          </div>
+        </div>
+
+        <!-- Language switcher -->
+        <div class="profile__lang-toggle">
+          <div class="profile__theme-info">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 3C12 3 8 7 8 12C8 17 12 21 12 21M12 3C12 3 16 7 16 12C16 17 12 21 12 21M3 12H21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span>{{ localeStore.t('profile.language') }}</span>
+          </div>
+          <div class="profile__lang-chips">
+            <button
+              class="profile__lang-chip"
+              :class="{ 'profile__lang-chip--active': localeStore.locale === 'ru' }"
+              @click="localeStore.setLocale('ru')"
+            >RU</button>
+            <button
+              class="profile__lang-chip"
+              :class="{ 'profile__lang-chip--active': localeStore.locale === 'en' }"
+              @click="localeStore.setLocale('en')"
+            >EN</button>
           </div>
         </div>
       </div>
 
       <!-- Details -->
       <div class="profile__section">
-        <h3 class="profile__section-title">Информация</h3>
+        <h3 class="profile__section-title">{{ localeStore.t('profile.info') }}</h3>
 
         <template v-if="!editing">
           <div class="profile__row">
-            <span class="profile__row-label">Имя</span>
+            <span class="profile__row-label">{{ localeStore.t('profile.name') }}</span>
             <span class="profile__row-value">{{ profile.firstName }}</span>
           </div>
           <div class="profile__row">
-            <span class="profile__row-label">Username</span>
+            <span class="profile__row-label">{{ localeStore.t('profile.username') }}</span>
             <span class="profile__row-value">{{ profile.username ?? '—' }}</span>
           </div>
-          <div class="profile__row">
-            <span class="profile__row-label">Email</span>
-            <span class="profile__row-value">{{ profile.email ?? '—' }}</span>
-          </div>
           <div v-if="profile.telegramId" class="profile__row">
-            <span class="profile__row-label">Telegram ID</span>
+            <span class="profile__row-label">{{ localeStore.t('profile.telegramId') }}</span>
             <span class="profile__row-value">{{ profile.telegramId }}</span>
           </div>
           <div class="profile__row">
-            <span class="profile__row-label">Дата регистрации</span>
+            <span class="profile__row-label">{{ localeStore.t('profile.registeredAt') }}</span>
             <span class="profile__row-value">{{ memberSince }}</span>
           </div>
 
           <AppButton block variant="secondary" class="mt" @click="startEdit">
             <AppIcon name="draft" :size="16" />
-            Редактировать
+            {{ localeStore.t('profile.edit') }}
           </AppButton>
         </template>
 
         <template v-else>
           <div class="profile__edit-form">
-            <AppInput v-model="editFirstName" label="Имя" placeholder="Ваше имя" />
-            <AppInput v-model="editUsername" label="Username" placeholder="username" />
+            <AppInput v-model="editFirstName" :label="localeStore.t('profile.name')" :placeholder="localeStore.t('profile.namePlaceholder')" />
+            <AppInput v-model="editUsername" :label="localeStore.t('profile.username')" placeholder="username" />
             <div class="profile__edit-actions">
-              <AppButton block :loading="saving" @click="saveEdit">Сохранить</AppButton>
-              <AppButton block variant="ghost" @click="editing = false">Отмена</AppButton>
+              <AppButton block :loading="saving" @click="saveEdit">{{ localeStore.t('profile.save') }}</AppButton>
+              <AppButton block variant="ghost" @click="editing = false">{{ localeStore.t('profile.cancel') }}</AppButton>
             </div>
           </div>
         </template>
@@ -240,7 +231,7 @@ function clearAndLogout(): void {
 
       <!-- Achievements -->
       <div class="profile__section">
-        <h3 class="profile__section-title">Достижения</h3>
+        <h3 class="profile__section-title">{{ localeStore.t('profile.achievements') }}</h3>
         <div class="profile__achievements">
           <div
             v-for="meta in Object.values(ACHIEVEMENT_META)"
@@ -260,7 +251,7 @@ function clearAndLogout(): void {
 
       <!-- Plan -->
       <div class="profile__section">
-        <h3 class="profile__section-title">Подписка</h3>
+        <h3 class="profile__section-title">{{ localeStore.t('profile.subscription') }}</h3>
         <div
           class="profile__plan-card"
           :style="{ borderColor: PLAN_META[planStore.effectivePlan].color + '40' }"
@@ -274,12 +265,12 @@ function clearAndLogout(): void {
                 :style="{ color: PLAN_META[planStore.effectivePlan].color }"
               >{{ PLAN_META[planStore.effectivePlan].name }}</span>
               <p v-if="planStore.isTrial" class="profile__plan-trial">
-                Пробный период · ещё {{ planStore.trialDaysLeft }} дн.
+                {{ localeStore.t('profile.trialPeriod') }} {{ planStore.trialDaysLeft }} {{ localeStore.t('profile.trialDays') }}
               </p>
               <p v-else-if="planStore.effectivePlan === 'free'" class="profile__plan-trial">
-                Бесплатный тариф
+                {{ localeStore.t('profile.freePlan') }}
               </p>
-              <p v-else class="profile__plan-trial">Подписка активна</p>
+              <p v-else class="profile__plan-trial">{{ localeStore.t('profile.activeSub') }}</p>
             </div>
           </div>
           <span class="profile__plan-arrow">
@@ -288,20 +279,11 @@ function clearAndLogout(): void {
         </div>
       </div>
 
-      <!-- Security -->
-      <div class="profile__section">
-        <h3 class="profile__section-title">Безопасность</h3>
-        <AppButton block variant="secondary" @click="showPasswordModal = true">
-          <AppIcon name="lock" :size="16" />
-          Сменить пароль
-        </AppButton>
-      </div>
-
       <!-- Logout -->
       <div class="profile__section">
         <AppButton block variant="danger" @click="doLogout">
           <AppIcon name="logout" :size="16" />
-          Выйти из аккаунта
+          {{ localeStore.t('profile.logout') }}
         </AppButton>
       </div>
     </template>
@@ -309,45 +291,13 @@ function clearAndLogout(): void {
     <!-- Ошибка загрузки профиля — dev-кнопка очистки -->
     <div v-else-if="!loading" class="profile__error">
       <AppIcon name="alert-circle" :size="40" color="var(--fp-text-tertiary)" />
-      <p>Не удалось загрузить профиль</p>
+      <p>{{ localeStore.t('profile.loadError') }}</p>
       <AppButton variant="danger" @click="clearAndLogout">
         <AppIcon name="trash" :size="16" />
-        Очистить данные и выйти
+        {{ localeStore.t('profile.clearData') }}
       </AppButton>
     </div>
 
-    <!-- Password Modal -->
-    <AppModal v-if="showPasswordModal" title="Сменить пароль" @close="showPasswordModal = false">
-      <div class="password-form">
-        <AppInput
-          v-if="profile?.hasPassword"
-          v-model="currentPassword"
-          label="Текущий пароль"
-          type="password"
-          placeholder="Введите текущий пароль"
-        />
-        <AppInput
-          v-model="newPassword"
-          label="Новый пароль"
-          type="password"
-          placeholder="Минимум 6 символов"
-        />
-        <AppInput
-          v-model="confirmPassword"
-          label="Подтверждение"
-          type="password"
-          placeholder="Повторите пароль"
-        />
-        <AppButton
-          block
-          :loading="changingPassword"
-          :disabled="!newPassword || !confirmPassword"
-          @click="savePassword"
-        >
-          Сменить пароль
-        </AppButton>
-      </div>
-    </AppModal>
   </div>
 </template>
 
@@ -502,6 +452,39 @@ function clearAndLogout(): void {
 
 .profile__toggle--active .profile__toggle-knob {
   transform: translateX(20px);
+}
+
+/* Language switcher */
+.profile__lang-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--fp-bg-secondary);
+  border-radius: var(--fp-radius);
+  margin-top: 8px;
+}
+
+.profile__lang-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.profile__lang-chip {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  background: var(--fp-bg-tertiary);
+  color: var(--fp-text-secondary);
+  border: 1.5px solid transparent;
+  transition: all var(--fp-transition);
+}
+
+.profile__lang-chip--active {
+  background: var(--fp-primary-bg);
+  color: var(--fp-primary);
+  border-color: var(--fp-primary);
 }
 
 /* Rows */

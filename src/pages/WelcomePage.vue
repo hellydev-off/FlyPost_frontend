@@ -2,52 +2,29 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppButton from '@/components/common/AppButton.vue'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 
 const router = useRouter()
+const { t, messages } = useLocaleStore()
 
-const slides = [
-  {
-    id: 'intro',
-    emoji: '🚀',
-    gradient: 'linear-gradient(160deg, #1e3a8a 0%, #1d4ed8 50%, #3b82f6 100%)',
-    accent: '#93c5fd',
-    title: 'NeoPost',
-    subtitle: 'Ваш AI-помощник\nдля Telegram-каналов',
-    desc: 'Создавайте контент, планируйте публикации и управляйте каналами — всё в одном месте',
-  },
-  {
-    id: 'channels',
-    emoji: '📡',
-    gradient: 'linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)',
-    accent: '#38bdf8',
-    title: 'Управляйте каналами',
-    subtitle: 'Все каналы\nв одном месте',
-    desc: 'Подключите свои Telegram-каналы и управляйте ими из единой панели без лишних переключений',
-  },
-  {
-    id: 'ai',
-    emoji: '✨',
-    gradient: 'linear-gradient(160deg, #1a0533 0%, #4c1d95 50%, #7c3aed 100%)',
-    accent: '#c4b5fd',
-    title: 'AI-генерация',
-    subtitle: 'Контент, который\nцепляет',
-    desc: 'Генерируйте посты, улучшайте тексты и создавайте недельные планы с помощью AI одним нажатием',
-  },
-  {
-    id: 'schedule',
-    emoji: '⏱️',
-    gradient: 'linear-gradient(160deg, #052e16 0%, #065f46 50%, #059669 100%)',
-    accent: '#6ee7b7',
-    title: 'Планировщик',
-    subtitle: 'Публикуйте\nв нужное время',
-    desc: 'Составляйте расписание постов заранее — они выйдут автоматически в точное время',
-  },
+const SLIDE_META = [
+  { id: 'intro',    emoji: '🚀', gradient: 'linear-gradient(160deg, #1e3a8a 0%, #1d4ed8 50%, #3b82f6 100%)', accent: '#93c5fd' },
+  { id: 'channels', emoji: '📡', gradient: 'linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f4c75 100%)', accent: '#38bdf8' },
+  { id: 'ai',       emoji: '✨', gradient: 'linear-gradient(160deg, #1a0533 0%, #4c1d95 50%, #7c3aed 100%)', accent: '#c4b5fd' },
+  { id: 'schedule', emoji: '⏱️', gradient: 'linear-gradient(160deg, #052e16 0%, #065f46 50%, #059669 100%)', accent: '#6ee7b7' },
 ]
+
+const slides = computed(() =>
+  SLIDE_META.map((meta, i) => ({
+    ...meta,
+    ...messages.value.welcome.slides[i],
+  })),
+)
 
 const current = ref(0)
 const transitioning = ref(false)
 
-const totalSlides = slides.length
+const totalSlides = SLIDE_META.length
 const isLast = computed(() => current.value === totalSlides - 1)
 
 // Touch swipe
@@ -133,22 +110,12 @@ function goTo(i: number) {
 
     <!-- Actions -->
     <div class="welcome__actions">
-      <template v-if="isLast">
-        <AppButton block class="welcome__btn-primary" @click="router.push({ name: 'register' })">
-          Создать аккаунт
-        </AppButton>
-        <AppButton block variant="ghost" class="welcome__btn-ghost" @click="router.push({ name: 'login' })">
-          Уже есть аккаунт
-        </AppButton>
-      </template>
-      <template v-else>
-        <AppButton block class="welcome__btn-primary" @click="next">
-          Далее
-        </AppButton>
-        <button class="welcome__skip" @click="router.push({ name: 'login' })">
-          Пропустить
-        </button>
-      </template>
+      <AppButton block class="welcome__btn-primary" @click="isLast ? router.push({ name: 'login' }) : next()">
+        {{ isLast ? t('welcome.start') : t('welcome.next') }}
+      </AppButton>
+      <button v-if="!isLast" class="welcome__skip" @click="router.push({ name: 'login' })">
+        {{ t('welcome.skip') }}
+      </button>
     </div>
   </div>
 </template>

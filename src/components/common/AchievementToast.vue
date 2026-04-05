@@ -2,13 +2,24 @@
 import { computed, watch, ref } from 'vue'
 import { useAchievementsStore } from '@/stores/useAchievementsStore'
 import { ACHIEVEMENT_META } from '@/types/achievement.types'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 
 const store = useAchievementsStore()
+const { t } = useLocaleStore()
 const visible = ref(false)
 let timer: ReturnType<typeof setTimeout> | null = null
 
 const current = computed(() => store.pendingToasts[0] ?? null)
-const meta = computed(() => current.value ? ACHIEVEMENT_META[current.value.type] : null)
+const meta = computed(() => {
+  if (!current.value) return null
+  const type = current.value.type
+  const base = ACHIEVEMENT_META[type]
+  return {
+    ...base,
+    title: t(`achievement.${type}_title`),
+    description: t(`achievement.${type}_desc`),
+  }
+})
 
 watch(current, (val) => {
   if (val) {
@@ -28,7 +39,7 @@ watch(current, (val) => {
       <div v-if="visible && meta" class="ach-toast" @click="visible = false">
         <div class="ach-toast__emoji">{{ meta.emoji }}</div>
         <div class="ach-toast__body">
-          <p class="ach-toast__label">Достижение разблокировано!</p>
+          <p class="ach-toast__label">{{ t('achievement.label') }}</p>
           <p class="ach-toast__title">{{ meta.title }}</p>
           <p class="ach-toast__desc">{{ meta.description }}</p>
         </div>

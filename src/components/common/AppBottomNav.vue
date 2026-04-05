@@ -2,18 +2,20 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppIcon from './AppIcon.vue'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 
 const route = useRoute()
 const router = useRouter()
+const locale = useLocaleStore()
 
 const showMoreSheet = ref(false)
 
-const tabs = [
-  { name: 'home', path: '/', icon: 'home', iconActive: 'home-filled', label: 'Главная' },
-  { name: 'channels', path: '/channels', icon: 'channels', iconActive: 'channels-filled', label: 'Каналы' },
+const tabs = computed(() => [
+  { name: 'home', path: '/', icon: 'home', iconActive: 'home-filled', label: locale.t('nav.home') },
+  { name: 'channels', path: '/channels', icon: 'channels', iconActive: 'channels-filled', label: locale.t('nav.channels') },
   { name: 'post-create', path: '/posts/create', icon: 'plus', iconActive: 'plus', label: '' },
-  { name: 'calendar', path: '/calendar', icon: 'calendar', iconActive: 'calendar-filled', label: 'Календарь' },
-]
+  { name: 'calendar', path: '/calendar', icon: 'calendar', iconActive: 'calendar-filled', label: locale.t('nav.calendar') },
+])
 
 function isActive(tabName: string): boolean {
   return route.name === tabName
@@ -62,7 +64,7 @@ function navigate(path: string): void {
       @click="showMoreSheet = true"
     >
       <AppIcon name="grid" :size="22" />
-      <span class="bottom-nav__label">Ещё</span>
+      <span class="bottom-nav__label">{{ locale.t('nav.more') }}</span>
     </button>
   </nav>
 
@@ -76,28 +78,28 @@ function navigate(path: string): void {
       <div v-if="showMoreSheet" class="more-sheet">
         <div class="more-sheet__handle" />
 
-        <p class="more-sheet__section-title">Разделы</p>
+        <p class="more-sheet__section-title">{{ locale.t('nav.sections') }}</p>
 
         <button class="more-sheet__item" @click="navigate('/analytics')">
           <span class="more-sheet__item-icon">
             <AppIcon name="chart" :size="20" />
           </span>
           <div class="more-sheet__item-body">
-            <span class="more-sheet__item-label">Аналитика</span>
-            <span class="more-sheet__item-desc">Статистика и графики</span>
+            <span class="more-sheet__item-label">{{ locale.t('nav.analytics') }}</span>
+            <span class="more-sheet__item-desc">{{ locale.t('nav.analyticsDesc') }}</span>
           </div>
           <AppIcon name="chevron-right" :size="16" />
         </button>
 
-        <p class="more-sheet__section-title">История</p>
+        <p class="more-sheet__section-title">{{ locale.t('nav.history') }}</p>
 
         <button class="more-sheet__item" @click="navigate('/history')">
           <span class="more-sheet__item-icon more-sheet__item-icon--posts">
             <AppIcon name="draft" :size="20" />
           </span>
           <div class="more-sheet__item-body">
-            <span class="more-sheet__item-label">История постов</span>
-            <span class="more-sheet__item-desc">Все черновики и публикации</span>
+            <span class="more-sheet__item-label">{{ locale.t('nav.postHistory') }}</span>
+            <span class="more-sheet__item-desc">{{ locale.t('nav.postHistoryDesc') }}</span>
           </div>
           <AppIcon name="chevron-right" :size="16" />
         </button>
@@ -107,8 +109,8 @@ function navigate(path: string): void {
             <AppIcon name="clock" :size="20" />
           </span>
           <div class="more-sheet__item-body">
-            <span class="more-sheet__item-label">Планы на день</span>
-            <span class="more-sheet__item-desc">История генераций дневных планов</span>
+            <span class="more-sheet__item-label">{{ locale.t('nav.dailyPlans') }}</span>
+            <span class="more-sheet__item-desc">{{ locale.t('nav.dailyPlansDesc') }}</span>
           </div>
           <AppIcon name="chevron-right" :size="16" />
         </button>
@@ -118,8 +120,8 @@ function navigate(path: string): void {
             <AppIcon name="calendar" :size="20" />
           </span>
           <div class="more-sheet__item-body">
-            <span class="more-sheet__item-label">Планы на неделю</span>
-            <span class="more-sheet__item-desc">История генераций недельных планов</span>
+            <span class="more-sheet__item-label">{{ locale.t('nav.weeklyPlans') }}</span>
+            <span class="more-sheet__item-desc">{{ locale.t('nav.weeklyPlansDesc') }}</span>
           </div>
           <AppIcon name="chevron-right" :size="16" />
         </button>

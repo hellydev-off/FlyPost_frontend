@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Channel } from '@/types/channel.types'
 import AppIcon from '@/components/common/AppIcon.vue'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 
 defineProps<{
   channel: Channel
@@ -11,6 +12,8 @@ defineEmits<{
   select: [id: string]
   profile: [id: string]
 }>()
+
+const { t } = useLocaleStore()
 </script>
 
 <template>
@@ -21,11 +24,11 @@ defineEmits<{
     <div class="channel-card__info">
       <div class="channel-card__title">{{ channel.title }}</div>
       <div class="channel-card__username">
-        {{ channel.username ? `@${channel.username}` : 'username не указан' }}
+        {{ channel.username ? `@${channel.username}` : t('channelCard.noUsername') }}
       </div>
       <div class="channel-card__status" :class="{ 'channel-card__status--ok': channel.botIsAdmin }">
         <span class="channel-card__status-dot" />
-        {{ channel.botIsAdmin ? 'Бот — админ' : 'Бот не добавлен' }}
+        {{ channel.botIsAdmin ? t('channelCard.botAdmin') : t('channelCard.botNotAdded') }}
       </div>
     </div>
     <div class="channel-card__actions">

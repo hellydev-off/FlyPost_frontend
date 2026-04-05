@@ -2,10 +2,12 @@
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOnboardingStore } from '@/stores/useOnboardingStore'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import AppIcon from '@/components/common/AppIcon.vue'
 
 const router = useRouter()
 const onboarding = useOnboardingStore()
+const { t } = useLocaleStore()
 
 onMounted(() => {
   onboarding.load()
@@ -20,7 +22,7 @@ function goToStep(route: object): void {
   <div class="onboarding">
     <div class="onboarding__header">
       <div class="onboarding__title-row">
-        <span class="onboarding__title">Начало работы</span>
+        <span class="onboarding__title">{{ t('onboarding.title') }}</span>
         <span class="onboarding__counter">{{ onboarding.doneCount }}/{{ onboarding.steps.length }}</span>
       </div>
       <button class="onboarding__dismiss" @click="onboarding.dismiss()">

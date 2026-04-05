@@ -2,12 +2,13 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi, type AuthResponse } from '@/api/auth.api'
 import { useToastStore } from './useToastStore'
+import { useLocaleStore } from './useLocaleStore'
 
 export interface AppUser {
   id: string
   firstName: string
-  email: string | null
   username: string | null
+  telegramId: string | null
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -23,20 +24,20 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = {
       id: result.user.id,
       firstName: result.user.firstName,
-      email: result.user.email,
       username: result.user.username,
+      telegramId: result.user.telegramId,
     }
     localStorage.setItem('fp_user', JSON.stringify(user.value))
   }
 
-  async function register(email: string, password: string, firstName: string): Promise<void> {
+  async function telegramLogin(initData: string): Promise<void> {
     isLoading.value = true
     try {
-      const result = await authApi.register(email, password, firstName)
+      const result = await authApi.telegram(initData)
       applyResult(result)
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message ?? 'Ошибка регистрации'
+        ?.response?.data?.message ?? useLocaleStore().t('stores.auth.telegramError')
       useToastStore().show(message, 'error')
       throw err
     } finally {
@@ -44,14 +45,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function login(email: string, password: string): Promise<void> {
+  async function devLogin(username: string): Promise<void> {
     isLoading.value = true
     try {
-      const result = await authApi.login(email, password)
+      const result = await authApi.devLogin(username)
       applyResult(result)
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })
-        ?.response?.data?.message ?? 'Неверный email или пароль'
+        ?.response?.data?.message ?? useLocaleStore().t('stores.auth.userNotFound')
       useToastStore().show(message, 'error')
       throw err
     } finally {
@@ -77,5 +78,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('fp_user')
   }
 
-  return { user, token, isAuthenticated, isLoading, register, login, restoreSession, logout }
+  return { user, token, isAuthenticated, isLoading, telegramLogin, devLogin, restoreSession, logout }
 })

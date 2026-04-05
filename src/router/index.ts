@@ -17,12 +17,6 @@ const router = createRouter({
       component: () => import('@/pages/LoginPage.vue'),
       meta: { guest: true },
     },
-    {
-      path: '/register',
-      name: 'register',
-      component: () => import('@/pages/RegisterPage.vue'),
-      meta: { guest: true },
-    },
 
     // App routes (требуют авторизации)
     {

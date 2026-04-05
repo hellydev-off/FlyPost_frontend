@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { schedulerApi } from '@/api/scheduler.api'
 import { useToastStore } from './useToastStore'
+import { useLocaleStore } from './useLocaleStore'
 import type { ScheduledPost, CreateSchedulePayload, UpdateSchedulePayload } from '@/types/scheduler.types'
 
 export const useSchedulerStore = defineStore('scheduler', () => {
@@ -13,7 +14,7 @@ export const useSchedulerStore = defineStore('scheduler', () => {
     try {
       scheduledPosts.value = await schedulerApi.getAll()
     } catch {
-      useToastStore().show('Не удалось загрузить расписание', 'error')
+      useToastStore().show(useLocaleStore().t('stores.scheduler.fetchError'), 'error')
     } finally {
       loading.value = false
     }
@@ -23,9 +24,9 @@ export const useSchedulerStore = defineStore('scheduler', () => {
     try {
       const item = await schedulerApi.schedule(payload)
       scheduledPosts.value.push(item)
-      useToastStore().show('Пост запланирован', 'success')
+      useToastStore().show(useLocaleStore().t('stores.scheduler.scheduled'), 'success')
     } catch {
-      useToastStore().show('Не удалось запланировать пост', 'error')
+      useToastStore().show(useLocaleStore().t('stores.scheduler.scheduleError'), 'error')
     }
   }
 
@@ -34,9 +35,9 @@ export const useSchedulerStore = defineStore('scheduler', () => {
       const updated = await schedulerApi.update(id, payload)
       const idx = scheduledPosts.value.findIndex(s => s.id === id)
       if (idx !== -1) scheduledPosts.value[idx] = updated
-      useToastStore().show('Расписание обновлено', 'success')
+      useToastStore().show(useLocaleStore().t('stores.scheduler.updated'), 'success')
     } catch {
-      useToastStore().show('Не удалось обновить расписание', 'error')
+      useToastStore().show(useLocaleStore().t('stores.scheduler.updateError'), 'error')
     }
   }
 
@@ -44,9 +45,9 @@ export const useSchedulerStore = defineStore('scheduler', () => {
     try {
       await schedulerApi.cancel(id)
       scheduledPosts.value = scheduledPosts.value.filter(s => s.id !== id)
-      useToastStore().show('Публикация отменена', 'success')
+      useToastStore().show(useLocaleStore().t('stores.scheduler.cancelled'), 'success')
     } catch {
-      useToastStore().show('Не удалось отменить публикацию', 'error')
+      useToastStore().show(useLocaleStore().t('stores.scheduler.cancelError'), 'error')
     }
   }
 

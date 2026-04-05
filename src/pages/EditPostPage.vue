@@ -4,11 +4,18 @@ import { useRouter } from 'vue-router'
 import { usePostsStore } from '@/stores/usePostsStore'
 import { useChannelsStore } from '@/stores/useChannelsStore'
 import { useSchedulerStore } from '@/stores/useSchedulerStore'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import PostEditor from '@/components/posts/PostEditor.vue'
+import MediaUpload from '@/components/posts/MediaUpload.vue'
+import CrossPostModal from '@/components/posts/CrossPostModal.vue'
+import PostOptions from '@/components/posts/PostOptions.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import DateTimePicker from '@/components/scheduler/DateTimePicker.vue'
+import { postsApi } from '@/api/posts.api'
+import { useToastStore } from '@/stores/useToastStore'
+import type { PostButton, PostPoll } from '@/types/post.types'
 
 const props = defineProps<{ id: string }>()
 
@@ -18,22 +25,56 @@ const channelsStore = useChannelsStore()
 const schedulerStore = useSchedulerStore()
 
 
+const toast = useToastStore()
+const locale = useLocaleStore()
 const content = ref('')
 const saving = ref(false)
+const postOptions = ref({
+  buttons: [] as PostButton[],
+  poll: null as PostPoll | null,
+  protectContent: false,
+  pinAfterPublish: false,
+  disableWebPreview: false,
+})
 const showScheduler = ref(false)
+const showCrossPost = ref(false)
+const crossPosting = ref(false)
+const pendingMedia = ref<File[]>([])
+const uploadingMedia = ref(false)
+
+async function uploadPendingMedia(): Promise<void> {
+  if (!pendingMedia.value.length) return
+  uploadingMedia.value = true
+  try {
+    await postsApi.uploadMedia(props.id, pendingMedia.value)
+    pendingMedia.value = []
+  } catch {
+    toast.show(locale.t('editPost.mediaError'), 'error')
+  } finally {
+    uploadingMedia.value = false
+  }
+}
 
 onMounted(async () => {
   await channelsStore.fetchChannels()
   await postsStore.fetchPost(props.id)
   if (postsStore.currentPost) {
     content.value = postsStore.currentPost.content
+    postOptions.value = {
+      buttons: postsStore.currentPost.buttons ?? [],
+      poll: postsStore.currentPost.poll ?? null,
+      protectContent: postsStore.currentPost.protectContent ?? false,
+      pinAfterPublish: postsStore.currentPost.pinAfterPublish ?? false,
+      disableWebPreview: postsStore.currentPost.disableWebPreview ?? false,
+    }
   }
 })
 
 async function save(): Promise<void> {
   saving.value = true
   try {
-    await postsStore.updatePost(props.id, { content: content.value })
+    await postsStore.updatePost(props.id, { content: content.value, ...postOptions.value })
+    await uploadPendingMedia()
   } finally {
     saving.value = false
   }
@@ -42,7 +83,8 @@ async function save(): Promise<void> {
 async function publish(): Promise<void> {
   saving.value = true
   try {
-    await postsStore.updatePost(props.id, { content: content.value })
+    await postsStore.updatePost(props.id, { content: content.value, ...postOptions.value })
+    await uploadPendingMedia()
     await postsStore.publishPost(props.id)
     router.push({ name: 'home' })
   } finally {
@@ -54,11 +96,24 @@ async function schedule(isoDate: string): Promise<void> {
   showScheduler.value = false
   saving.value = true
   try {
-    await postsStore.updatePost(props.id, { content: content.value })
+    await postsStore.updatePost(props.id, { content: content.value, ...postOptions.value })
     await schedulerStore.schedulePost({ postId: props.id, scheduledAt: isoDate })
     router.push({ name: 'calendar' })
   } finally {
     saving.value = false
+  }
+}
+
+async function crossPost(channelIds: string[]): Promise<void> {
+  crossPosting.value = true
+  try {
+    await postsApi.crossPost(props.id, channelIds)
+    showCrossPost.value = false
+    toast.show(locale.t('editPost.crossPostSuccess'), 'success')
+  } catch {
+    toast.show(locale.t('editPost.crossPostError'), 'error')
+  } finally {
+    crossPosting.value = false
   }
 }
 
@@ -74,7 +129,7 @@ async function remove(): Promise<void> {
       <button class="edit-post__back" @click="router.back()">
         <AppIcon name="arrow-left" :size="22" />
       </button>
-      <h1>Редактирование</h1>
+      <h1>{{ locale.t('editPost.title') }}</h1>
     </div>
 
     <AppLoader v-if="postsStore.loading" />
@@ -87,38 +142,63 @@ async function remove(): Promise<void> {
         />
       </div>
 
+      <div class="mt">
+        <MediaUpload
+          :post-id="props.id"
+          :uploading="uploadingMedia"
+          @change="files => pendingMedia = files"
+        />
+      </div>
+
+      <div class="mt">
+        <PostOptions v-model="postOptions" />
+      </div>
+
       <div class="edit-post__actions mt">
         <AppButton block :loading="saving" @click="save">
           <AppIcon name="check" :size="18" />
-          Сохранить
+          {{ locale.t('editPost.save') }}
         </AppButton>
         <div class="edit-post__actions-row">
           <AppButton block variant="secondary" :loading="saving" @click="publish">
             <AppIcon name="rocket" :size="18" />
-            Опубликовать
+            {{ locale.t('editPost.publish') }}
           </AppButton>
           <AppButton block variant="secondary" :loading="saving" @click="showScheduler = true">
             <AppIcon name="clock" :size="18" />
-            Запланировать
+            {{ locale.t('editPost.schedule') }}
           </AppButton>
         </div>
+        <AppButton block variant="secondary" :loading="crossPosting" @click="showCrossPost = true">
+          <AppIcon name="share" :size="18" />
+          {{ locale.t('editPost.crossPost') }}
+        </AppButton>
         <AppButton block variant="danger" @click="remove">
           <AppIcon name="trash" :size="18" />
-          Удалить
+          {{ locale.t('editPost.delete') }}
         </AppButton>
       </div>
     </template>
 
     <div v-else class="edit-post__empty">
       <AppIcon name="draft" :size="48" color="var(--fp-text-tertiary)" />
-      <p>Пост не найден</p>
+      <p>{{ locale.t('editPost.notFound') }}</p>
     </div>
 
     <DateTimePicker
       v-if="showScheduler"
-      title="Запланировать пост"
+      :title="locale.t('editPost.scheduleTitle')"
       @close="showScheduler = false"
       @confirm="schedule"
+    />
+
+    <CrossPostModal
+      v-if="showCrossPost && postsStore.currentPost"
+      :channels="channelsStore.channels"
+      :current-channel-id="postsStore.currentPost.channelId"
+      :loading="crossPosting"
+      @close="showCrossPost = false"
+      @confirm="crossPost"
     />
   </div>
 </template>
@@ -152,6 +232,13 @@ async function remove(): Promise<void> {
 .edit-post__back:active {
   transform: scale(0.9);
   background: var(--fp-bg-tertiary);
+}
+
+.edit-post__section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fp-text-secondary);
+  margin-bottom: 10px;
 }
 
 .edit-post__actions {
