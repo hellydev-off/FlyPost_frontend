@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { usePlanStore } from '@/stores/usePlanStore'
 import { useLocaleStore } from '@/stores/useLocaleStore'
 
 const router = useRouter()
 const planStore = usePlanStore()
-const { t, messages } = useLocaleStore()
+const localeStore = useLocaleStore()
+const { t } = localeStore
+const { messages } = storeToRefs(localeStore)
 
 const limitCode = computed(() => planStore.paywallLimitCode ?? '')
 const featureName = computed(() => {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import AppTextarea from '@/components/common/AppTextarea.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppModal from '@/components/common/AppModal.vue'
@@ -21,7 +22,9 @@ const emit = defineEmits<{
 
 const toast = useToastStore()
 const planStore = usePlanStore()
-const { t, messages } = useLocaleStore()
+const localeStore = useLocaleStore()
+const { t } = localeStore
+const { messages } = storeToRefs(localeStore)
 
 // --- Templates ---
 const showTemplatesModal = ref(false)
@@ -74,7 +77,7 @@ async function generateAi(): Promise<void> {
 // --- Improve ---
 const improveLoading = ref<ImproveAction | null>(null)
 const showToneModal = ref(false)
-const improveTone = ref(messages.value.editor.tonePresets[0])
+const improveTone = ref(messages.value?.editor?.tonePresets?.[0] ?? '')
 
 const hasContent = computed(() => props.modelValue.trim().length > 0)
 

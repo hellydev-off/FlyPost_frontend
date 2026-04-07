@@ -5,6 +5,7 @@ import { usePostsStore } from '@/stores/usePostsStore'
 import { useSchedulerStore } from '@/stores/useSchedulerStore'
 import { useChannelsStore } from '@/stores/useChannelsStore'
 import { usePlanStore } from '@/stores/usePlanStore'
+import { storeToRefs } from 'pinia'
 import { useLocaleStore } from '@/stores/useLocaleStore'
 import PostStatusBadge from '@/components/posts/PostStatusBadge.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
@@ -18,7 +19,9 @@ const postsStore = usePostsStore()
 const schedulerStore = useSchedulerStore()
 const channelsStore = useChannelsStore()
 const planStore = usePlanStore()
-const { t, messages } = useLocaleStore()
+const localeStore = useLocaleStore()
+const { t } = localeStore
+const { messages } = storeToRefs(localeStore)
 
 const now = new Date()
 const viewYear = ref(now.getFullYear())

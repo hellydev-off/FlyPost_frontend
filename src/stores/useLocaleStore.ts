@@ -13,9 +13,10 @@ const STORAGE_KEY = 'fp_locale'
 const locales: Record<Locale, Messages> = { ru, en }
 
 export const useLocaleStore = defineStore('locale', () => {
-  const locale = ref<Locale>((localStorage.getItem(STORAGE_KEY) as Locale) ?? 'ru')
+  const stored = localStorage.getItem(STORAGE_KEY)
+  const locale = ref<Locale>(stored === 'en' ? 'en' : 'ru')
 
-  const messages = computed(() => locales[locale.value])
+  const messages = computed(() => locales[locale.value] ?? locales.ru)
 
   function setLocale(l: Locale): void {
     locale.value = l
