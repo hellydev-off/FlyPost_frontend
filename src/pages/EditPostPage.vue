@@ -12,6 +12,7 @@ import PostOptions from '@/components/posts/PostOptions.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
+import AppConfirm from '@/components/common/AppConfirm.vue'
 import DateTimePicker from '@/components/scheduler/DateTimePicker.vue'
 import { postsApi } from '@/api/posts.api'
 import { useToastStore } from '@/stores/useToastStore'
@@ -38,6 +39,7 @@ const postOptions = ref({
 })
 const showScheduler = ref(false)
 const showCrossPost = ref(false)
+const showDeleteConfirm = ref(false)
 const crossPosting = ref(false)
 const pendingMedia = ref<File[]>([])
 const uploadingMedia = ref(false)
@@ -75,6 +77,9 @@ async function save(): Promise<void> {
   try {
     await postsStore.updatePost(props.id, { content: content.value, ...postOptions.value })
     await uploadPendingMedia()
+    toast.show(locale.t('editPost.saved'), 'success')
+  } catch {
+    toast.show(locale.t('editPost.saveError'), 'error')
   } finally {
     saving.value = false
   }
@@ -87,6 +92,8 @@ async function publish(): Promise<void> {
     await uploadPendingMedia()
     await postsStore.publishPost(props.id)
     router.push({ name: 'home' })
+  } catch {
+    toast.show(locale.t('editPost.publishError'), 'error')
   } finally {
     saving.value = false
   }
@@ -99,6 +106,8 @@ async function schedule(isoDate: string): Promise<void> {
     await postsStore.updatePost(props.id, { content: content.value, ...postOptions.value })
     await schedulerStore.schedulePost({ postId: props.id, scheduledAt: isoDate })
     router.push({ name: 'calendar' })
+  } catch {
+    toast.show(locale.t('editPost.scheduleError'), 'error')
   } finally {
     saving.value = false
   }
@@ -118,6 +127,7 @@ async function crossPost(channelIds: string[]): Promise<void> {
 }
 
 async function remove(): Promise<void> {
+  showDeleteConfirm.value = false
   await postsStore.deletePost(props.id)
   router.push({ name: 'home' })
 }
@@ -173,7 +183,7 @@ async function remove(): Promise<void> {
           <AppIcon name="share" :size="18" />
           {{ locale.t('editPost.crossPost') }}
         </AppButton>
-        <AppButton block variant="danger" @click="remove">
+        <AppButton block variant="danger" @click="showDeleteConfirm = true">
           <AppIcon name="trash" :size="18" />
           {{ locale.t('editPost.delete') }}
         </AppButton>
@@ -199,6 +209,16 @@ async function remove(): Promise<void> {
       :loading="crossPosting"
       @close="showCrossPost = false"
       @confirm="crossPost"
+    />
+
+    <AppConfirm
+      v-if="showDeleteConfirm"
+      :message="locale.t('editPost.deleteConfirm')"
+      :confirm-label="locale.t('common.delete')"
+      :cancel-label="locale.t('common.cancel')"
+      danger
+      @confirm="remove"
+      @cancel="showDeleteConfirm = false"
     />
   </div>
 </template>

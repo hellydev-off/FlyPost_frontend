@@ -131,6 +131,15 @@ function onImproveClick(action: ImproveAction): void {
       :rows="8"
       @update:model-value="$emit('update:modelValue', $event)"
     />
+    <div class="post-editor__char-bar">
+      <span
+        class="post-editor__char-bar-count"
+        :class="{
+          'post-editor__char-bar-count--warn': modelValue.length >= 3800,
+          'post-editor__char-bar-count--danger': modelValue.length >= 4000,
+        }"
+      >{{ modelValue.length }} / 4096</span>
+    </div>
 
     <!-- AI toolbar -->
     <div class="ai-toolbar">
@@ -284,6 +293,29 @@ function onImproveClick(action: ImproveAction): void {
   display: flex;
   flex-direction: column;
   gap: var(--fp-spacing-sm);
+}
+
+/* Char bar */
+.post-editor__char-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -4px;
+}
+
+.post-editor__char-bar-count {
+  font-size: 11px;
+  color: var(--fp-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  transition: color 0.2s;
+}
+
+.post-editor__char-bar-count--warn {
+  color: #D97706;
+}
+
+.post-editor__char-bar-count--danger {
+  color: #DC2626;
+  font-weight: 600;
 }
 
 /* AI Toolbar */

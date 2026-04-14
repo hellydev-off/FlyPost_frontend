@@ -68,8 +68,12 @@ async function createWithMedia(): Promise<string | null> {
 
 async function saveDraft(): Promise<void> {
   if (!validate()) return
-  const id = await createWithMedia()
-  if (id) router.push({ name: 'home' })
+  try {
+    const id = await createWithMedia()
+    if (id) router.push({ name: 'home' })
+  } catch {
+    toast.show(locale.t('createPost.saveError'), 'error')
+  }
 }
 
 async function publishNow(): Promise<void> {
@@ -81,6 +85,8 @@ async function publishNow(): Promise<void> {
       await postsStore.publishPost(id)
       router.push({ name: 'home' })
     }
+  } catch {
+    toast.show(locale.t('createPost.publishError'), 'error')
   } finally {
     publishing.value = false
   }
@@ -96,6 +102,8 @@ async function onSchedule(scheduledAt: string): Promise<void> {
       showScheduler.value = false
       router.push({ name: 'calendar' })
     }
+  } catch {
+    toast.show(locale.t('createPost.scheduleError'), 'error')
   } finally {
     scheduling.value = false
   }
@@ -108,6 +116,10 @@ function validate(): boolean {
   }
   if (!content.value.trim()) {
     toast.show(locale.t('createPost.noContent'), 'error')
+    return false
+  }
+  if (content.value.length > 4096) {
+    toast.show(locale.t('createPost.tooLong'), 'error')
     return false
   }
   return true

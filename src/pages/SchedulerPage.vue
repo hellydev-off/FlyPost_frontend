@@ -1,13 +1,26 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useSchedulerStore } from '@/stores/useSchedulerStore'
 import { useLocaleStore } from '@/stores/useLocaleStore'
 import ScheduleCard from '@/components/scheduler/ScheduleCard.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
+import AppConfirm from '@/components/common/AppConfirm.vue'
 
 const schedulerStore = useSchedulerStore()
 const { t } = useLocaleStore()
+
+const cancelTargetId = ref<string | null>(null)
+
+function onCancelRequest(id: string): void {
+  cancelTargetId.value = id
+}
+
+async function confirmCancel(): Promise<void> {
+  if (!cancelTargetId.value) return
+  await schedulerStore.cancelSchedule(cancelTargetId.value)
+  cancelTargetId.value = null
+}
 
 onMounted(() => {
   schedulerStore.fetchScheduled()
@@ -29,7 +42,7 @@ onMounted(() => {
         v-for="item in schedulerStore.scheduledPosts"
         :key="item.id"
         :item="item"
-        @cancel="schedulerStore.cancelSchedule"
+        @cancel="onCancelRequest"
       />
     </div>
 
@@ -37,6 +50,16 @@ onMounted(() => {
       <AppIcon name="clock" :size="48" color="var(--fp-text-tertiary)" />
       <p>{{ t('scheduler.empty') }}</p>
     </div>
+
+    <AppConfirm
+      v-if="cancelTargetId"
+      :message="t('scheduler.cancelConfirm')"
+      :confirm-label="t('scheduler.cancelConfirmBtn')"
+      :cancel-label="t('common.cancel')"
+      danger
+      @confirm="confirmCancel"
+      @cancel="cancelTargetId = null"
+    />
   </div>
 </template>
 
