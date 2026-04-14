@@ -37,7 +37,7 @@ function iconName(type: string): string {
   top: 12px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 200;
+  z-index: 9800;
   display: flex;
   flex-direction: column;
   gap: 8px;

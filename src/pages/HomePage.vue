@@ -31,20 +31,23 @@ const healthScore = ref<HealthScoreData | null>(null)
 const loading = ref(true)
 
 onMounted(async () => {
-  await channelsStore.fetchChannels()
-  const channelId = channelsStore.selectedChannelId
-  await postsStore.fetchPosts(channelId ? { channelId } : undefined)
-  if (channelId) {
-    const [s, st, hs] = await Promise.all([
-      analyticsApi.getStats(channelId),
-      analyticsApi.getStreak(channelId),
-      analyticsApi.getHealthScore(channelId),
-    ])
-    stats.value = s
-    streak.value = st
-    healthScore.value = hs
+  try {
+    await channelsStore.fetchChannels()
+    const channelId = channelsStore.selectedChannelId
+    await postsStore.fetchPosts(channelId ? { channelId } : undefined)
+    if (channelId) {
+      const [s, st, hs] = await Promise.all([
+        analyticsApi.getStats(channelId),
+        analyticsApi.getStreak(channelId),
+        analyticsApi.getHealthScore(channelId),
+      ])
+      stats.value = s
+      streak.value = st
+      healthScore.value = hs
+    }
+  } finally {
+    loading.value = false
   }
-  loading.value = false
 })
 
 function goToPost(id: string): void {
@@ -63,16 +66,14 @@ function goToPost(id: string): void {
       </div>
       <div class="home__header-right">
         <button
-          class="home__plan-badge"
-          :style="{ color: PLAN_META[planStore.effectivePlan].color, borderColor: PLAN_META[planStore.effectivePlan].color + '40' }"
-          @click="router.push({ name: 'pricing' })"
+          class="home__avatar"
+          @click="router.push({ name: 'profile' })"
         >
-          {{ PLAN_META[planStore.effectivePlan].emoji }}
-          {{ t(`planMeta.${planStore.effectivePlan}.name`) }}
-          <span v-if="planStore.isTrial" class="home__plan-trial">{{ t('home.trial') }}</span>
-        </button>
-        <button class="home__avatar" @click="router.push({ name: 'profile' })">
           {{ auth.user?.firstName?.[0]?.toUpperCase() ?? '?' }}
+          <span
+            class="home__avatar-plan"
+            :style="{ background: PLAN_META[planStore.effectivePlan].color }"
+          >{{ planStore.effectivePlan }}</span>
         </button>
       </div>
     </div>
@@ -89,13 +90,13 @@ function goToPost(id: string): void {
     <template v-else-if="stats">
       <!-- Streak + Health Score row -->
       <div v-if="streak || healthScore" class="home__insights">
-        <div v-if="streak && streak.streak > 0" class="home__streak">
-          <AppIcon name="fire" :size="18" color="#f59e0b" />
+        <button v-if="streak && streak.streak > 0" class="home__streak" @click="router.push({ name: 'streak' })">
+          <span class="home__streak-fire">🔥</span>
           <span class="home__streak-count">{{ streak.streak }}</span>
           <span class="home__streak-label">
             {{ streak.streak === 1 ? t('home.dayStreak1') : streak.streak < 5 ? t('home.dayStreak2') : t('home.dayStreak5') }}
           </span>
-        </div>
+        </button>
         <div
           v-if="healthScore"
           class="home__health"
@@ -187,29 +188,8 @@ function goToPost(id: string): void {
   flex-shrink: 0;
 }
 
-.home__plan-badge {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 5px 10px;
-  border-radius: 20px;
-  border: 1.5px solid;
-  font-size: 12px;
-  font-weight: 700;
-  background: transparent;
-  transition: opacity var(--fp-transition);
-  white-space: nowrap;
-}
-
-.home__plan-badge:active { opacity: 0.7; }
-
-.home__plan-trial {
-  font-size: 10px;
-  font-weight: 600;
-  opacity: 0.7;
-}
-
 .home__avatar {
+  position: relative;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -223,10 +203,28 @@ function goToPost(id: string): void {
   flex-shrink: 0;
   transition: all var(--fp-transition);
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  overflow: visible;
+  margin-bottom: 6px;
 }
 
 .home__avatar:active {
   transform: scale(0.9);
+}
+
+.home__avatar-plan {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .home__insights {
@@ -241,9 +239,24 @@ function goToPost(id: string): void {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: color-mix(in srgb, #f59e0b 10%, var(--fp-bg-secondary));
-  border-radius: 20px;
-  border: 1.5px solid color-mix(in srgb, #f59e0b 25%, transparent);
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.home__streak:active {
+  transform: scale(0.94);
+  opacity: 0.85;
+}
+
+.home__streak-fire {
+  font-size: 18px;
+  animation: fire-bob 1.8s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes fire-bob {
+  0%, 100% { transform: scaleY(1) rotate(-3deg); }
+  50% { transform: scaleY(1.12) rotate(3deg); }
 }
 
 .home__streak-count {

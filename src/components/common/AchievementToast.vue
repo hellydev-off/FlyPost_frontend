@@ -21,14 +21,20 @@ const meta = computed(() => {
   }
 })
 
+function dismiss(): void {
+  if (timer) {
+    clearTimeout(timer)
+    timer = null
+  }
+  visible.value = false
+  setTimeout(() => store.dismissToast(), 350)
+}
+
 watch(current, (val) => {
   if (val) {
     visible.value = true
     if (timer) clearTimeout(timer)
-    timer = setTimeout(() => {
-      visible.value = false
-      setTimeout(() => store.dismissToast(), 350)
-    }, 4000)
+    timer = setTimeout(dismiss, 4000)
   }
 })
 </script>
@@ -36,7 +42,7 @@ watch(current, (val) => {
 <template>
   <Teleport to="body">
     <Transition name="achievement">
-      <div v-if="visible && meta" class="ach-toast" @click="visible = false">
+      <div v-if="visible && meta" class="ach-toast" @click="dismiss()">
         <div class="ach-toast__emoji">{{ meta.emoji }}</div>
         <div class="ach-toast__body">
           <p class="ach-toast__label">{{ t('achievement.label') }}</p>

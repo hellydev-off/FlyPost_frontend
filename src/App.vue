@@ -34,6 +34,7 @@ watchEffect(() => {
       <component :is="Component" />
     </Transition>
   </router-view>
+  <div v-if="showNav" class="nav-floor" />
   <AppBottomNav v-if="showNav" />
 </template>
 
@@ -43,5 +44,19 @@ watchEffect(() => {
 #app.app--guest {
   padding-top: var(--fp-spacing);
   padding-bottom: var(--fp-spacing);
+}
+
+/* Непрозрачная подложка под навбаром — перекрывает контент при скролле */
+.nav-floor {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: var(--fp-max-width);
+  height: calc(var(--fp-bottom-nav-height) + var(--fp-tg-bottom-inset) + env(safe-area-inset-bottom, 0px));
+  background: var(--fp-bg);
+  z-index: 99;
+  pointer-events: none;
 }
 </style>

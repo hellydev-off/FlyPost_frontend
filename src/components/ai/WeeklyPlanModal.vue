@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { aiApi } from '@/api/ai.api'
 import { usePostsStore } from '@/stores/usePostsStore'
@@ -17,20 +17,33 @@ const router = useRouter()
 const postsStore = usePostsStore()
 const toast = useToastStore()
 
+// Step: 'setup' | 'result'
+const step = ref<'setup' | 'result'>('setup')
+const postsPerDay = ref(1)
+
 const ideas = ref<WeeklyPlanIdea[]>([])
-const loading = ref(true)
+const loading = ref(false)
 const error = ref(false)
-const creatingId = ref<number | null>(null)
+const creatingKey = ref<string | null>(null)
 
 const WEEK_DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+const WEEK_DAYS_FULL = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 
-onMounted(() => { load() })
+// Группируем идеи по дням
+const byDay = computed(() => {
+  return WEEK_DAYS.map((_, i) => ({
+    short: WEEK_DAYS[i],
+    full: WEEK_DAYS_FULL[i],
+    ideas: ideas.value.filter(idea => idea.dayIndex === i),
+  }))
+})
 
-async function load(): Promise<void> {
+async function generate(): Promise<void> {
+  step.value = 'result'
   loading.value = true
   error.value = false
   try {
-    ideas.value = await aiApi.weeklyPlan(props.channelId)
+    ideas.value = await aiApi.weeklyPlan(props.channelId, postsPerDay.value)
   } catch {
     error.value = true
     toast.show('Не удалось сгенерировать план', 'error')
@@ -39,8 +52,9 @@ async function load(): Promise<void> {
   }
 }
 
-async function createDraft(idea: WeeklyPlanIdea, idx: number): Promise<void> {
-  creatingId.value = idx
+async function createDraft(idea: WeeklyPlanIdea, dayIndex: number, postIndex: number): Promise<void> {
+  const key = `${dayIndex}-${postIndex}`
+  creatingKey.value = key
   try {
     const content = `${idea.title}\n\n${idea.summary}`
     const post = await postsStore.createPost({ channelId: props.channelId, content })
@@ -51,12 +65,8 @@ async function createDraft(idea: WeeklyPlanIdea, idx: number): Promise<void> {
   } catch {
     toast.show('Ошибка создания черновика', 'error')
   } finally {
-    creatingId.value = null
+    creatingKey.value = null
   }
-}
-
-function dayLabel(idx: number): string {
-  return WEEK_DAYS[idx % 7]
 }
 
 function formatHour(h: number): string {
@@ -65,142 +75,285 @@ function formatHour(h: number): string {
 </script>
 
 <template>
-  <AppModal title="AI-план на неделю" @close="emit('close')">
-    <AppLoader v-if="loading" />
+  <AppModal :title="step === 'setup' ? 'AI-план на неделю' : 'План на неделю'" @close="emit('close')">
 
-    <div v-else-if="error" class="weekly-plan__error">
-      <AppIcon name="alert-circle" :size="36" color="var(--fp-error)" />
-      <p>Не удалось сгенерировать план</p>
-      <AppButton variant="secondary" @click="load">
-        <AppIcon name="refresh" :size="15" />
-        Попробовать снова
+    <!-- ── Шаг 1: настройка ── -->
+    <div v-if="step === 'setup'" class="wp-setup">
+      <p class="wp-setup__desc">
+        AI подберёт темы для каждого дня недели — тебе останется только писать
+      </p>
+
+      <div class="wp-setup__field">
+        <p class="wp-setup__label">Постов в день</p>
+        <div class="wp-setup__picker">
+          <button
+            v-for="n in 4"
+            :key="n"
+            class="wp-setup__pick-btn"
+            :class="{ 'wp-setup__pick-btn--active': postsPerDay === n }"
+            @click="postsPerDay = n"
+          >
+            {{ n }}
+          </button>
+        </div>
+        <p class="wp-setup__hint">Итого: {{ postsPerDay * 7 }} постов на неделю</p>
+      </div>
+
+      <AppButton block @click="generate">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+          <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Сгенерировать план
       </AppButton>
     </div>
 
-    <div v-else class="weekly-plan">
-      <p class="weekly-plan__subtitle">
-        {{ ideas.length }} идей на неделю — нажми, чтобы создать черновик
-      </p>
+    <!-- ── Шаг 2: загрузка ── -->
+    <div v-else-if="loading" class="wp-loading">
+      <AppLoader />
+      <p class="wp-loading__text">Генерирую {{ postsPerDay * 7 }} идей для твоего канала...</p>
+    </div>
 
-      <div class="weekly-plan__list">
-        <div
-          v-for="(idea, i) in ideas"
-          :key="i"
-          class="weekly-plan__item"
-        >
-          <div class="weekly-plan__day-badge">
-            <span class="weekly-plan__day-name">{{ dayLabel(i) }}</span>
-            <span class="weekly-plan__day-hour">{{ formatHour(idea.suggestedHour) }}</span>
-          </div>
-
-          <div class="weekly-plan__item-body">
-            <span class="weekly-plan__item-title">{{ idea.title }}</span>
-            <p class="weekly-plan__item-summary">{{ idea.summary }}</p>
-          </div>
-
-          <button
-            class="weekly-plan__create-btn"
-            :disabled="creatingId !== null"
-            @click="createDraft(idea, i)"
-          >
-            <AppIcon v-if="creatingId === i" name="refresh" :size="15" />
-            <AppIcon v-else name="draft" :size="15" />
-          </button>
-        </div>
+    <!-- ── Шаг 2: ошибка ── -->
+    <div v-else-if="error" class="wp-error">
+      <AppIcon name="alert-circle" :size="36" color="var(--fp-error)" />
+      <p>Не удалось сгенерировать план</p>
+      <div class="wp-error__actions">
+        <AppButton variant="secondary" @click="generate">
+          <AppIcon name="refresh" :size="15" />
+          Попробовать снова
+        </AppButton>
+        <AppButton variant="ghost" @click="step = 'setup'">Назад</AppButton>
       </div>
     </div>
+
+    <!-- ── Шаг 2: результат ── -->
+    <div v-else class="wp-result">
+      <p class="wp-result__subtitle">
+        Нажми <AppIcon name="draft" :size="13" style="display:inline;vertical-align:middle" /> чтобы создать черновик
+      </p>
+
+      <div class="wp-days">
+        <div v-for="(day, di) in byDay" :key="di" class="wp-day">
+          <div class="wp-day__header">
+            <span class="wp-day__name">{{ day.full }}</span>
+            <span class="wp-day__short">{{ day.short }}</span>
+          </div>
+
+          <div class="wp-day__posts">
+            <div
+              v-for="(idea, pi) in day.ideas"
+              :key="pi"
+              class="wp-post"
+            >
+              <div class="wp-post__time">{{ formatHour(idea.suggestedHour) }}</div>
+              <div class="wp-post__body">
+                <span class="wp-post__title">{{ idea.title }}</span>
+                <p class="wp-post__summary">{{ idea.summary }}</p>
+              </div>
+              <button
+                class="wp-post__btn"
+                :disabled="creatingKey !== null"
+                @click="createDraft(idea, di, pi)"
+              >
+                <AppIcon
+                  :name="creatingKey === `${di}-${pi}` ? 'refresh' : 'draft'"
+                  :size="14"
+                />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="wp-result__back" @click="step = 'setup'">
+        <AppIcon name="refresh" :size="14" />
+        Изменить настройки
+      </button>
+    </div>
+
   </AppModal>
 </template>
 
 <style scoped>
-.weekly-plan__subtitle {
-  font-size: 13px;
-  color: var(--fp-text-secondary);
-  margin-bottom: 14px;
-}
-
-/* Error state */
-.weekly-plan__error {
+/* ── Setup ── */
+.wp-setup {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 24px 0;
-  text-align: center;
+  gap: 20px;
 }
 
-.weekly-plan__error p {
+.wp-setup__desc {
   font-size: 14px;
   color: var(--fp-text-secondary);
+  line-height: 1.5;
 }
 
-/* List */
-.weekly-plan__list {
+.wp-setup__field {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.weekly-plan__item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px;
-  background: var(--fp-bg-secondary);
-  border-radius: var(--fp-radius-sm);
+.wp-setup__label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fp-text);
 }
 
-/* Day badge */
-.weekly-plan__day-badge {
+.wp-setup__picker {
+  display: flex;
+  gap: 8px;
+}
+
+.wp-setup__pick-btn {
+  flex: 1;
+  height: 52px;
+  border-radius: 12px;
+  border: 1.5px solid var(--fp-border);
+  background: var(--fp-bg-secondary);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--fp-text-secondary);
+  transition: all 0.18s ease;
+}
+
+.wp-setup__pick-btn--active {
+  border-color: var(--fp-primary);
+  background: var(--fp-primary-bg);
+  color: var(--fp-primary);
+  transform: scale(1.04);
+}
+
+.wp-setup__hint {
+  font-size: 12px;
+  color: var(--fp-text-tertiary);
+}
+
+/* ── Loading ── */
+.wp-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  min-width: 38px;
-  padding: 6px 4px;
-  background: var(--fp-primary-bg);
-  border-radius: 8px;
-  flex-shrink: 0;
+  gap: 14px;
+  padding: 16px 0 8px;
 }
 
-.weekly-plan__day-name {
-  font-size: 12px;
+.wp-loading__text {
+  font-size: 13px;
+  color: var(--fp-text-secondary);
+  text-align: center;
+}
+
+/* ── Error ── */
+.wp-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  text-align: center;
+}
+
+.wp-error p {
+  font-size: 14px;
+  color: var(--fp-text-secondary);
+}
+
+.wp-error__actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+/* ── Result ── */
+.wp-result__subtitle {
+  font-size: 13px;
+  color: var(--fp-text-secondary);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wp-days {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Day block */
+.wp-day__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.wp-day__name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fp-text);
+}
+
+.wp-day__short {
+  font-size: 11px;
   font-weight: 700;
   color: var(--fp-primary);
-  line-height: 1;
+  background: var(--fp-primary-bg);
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
-.weekly-plan__day-hour {
-  font-size: 10px;
+.wp-day__posts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Post row */
+.wp-post {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--fp-bg-secondary);
+  border-radius: 10px;
+}
+
+.wp-post__time {
+  font-size: 11px;
+  font-weight: 700;
   color: var(--fp-primary);
-  opacity: 0.7;
+  background: var(--fp-primary-bg);
+  padding: 3px 7px;
+  border-radius: 6px;
+  flex-shrink: 0;
   margin-top: 2px;
+  white-space: nowrap;
 }
 
-/* Body */
-.weekly-plan__item-body {
+.wp-post__body {
   flex: 1;
   min-width: 0;
 }
 
-.weekly-plan__item-title {
+.wp-post__title {
   font-size: 13px;
   font-weight: 600;
   color: var(--fp-text);
   display: block;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
-.weekly-plan__item-summary {
+.wp-post__summary {
   font-size: 12px;
   color: var(--fp-text-secondary);
-  line-height: 1.5;
+  line-height: 1.45;
 }
 
-/* Create button */
-.weekly-plan__create-btn {
-  width: 34px;
-  height: 34px;
+.wp-post__btn {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--fp-bg-tertiary);
   color: var(--fp-text-secondary);
@@ -211,13 +364,27 @@ function formatHour(h: number): string {
   transition: all var(--fp-transition);
 }
 
-.weekly-plan__create-btn:not(:disabled):active {
+.wp-post__btn:not(:disabled):active {
   background: var(--fp-primary);
   color: #fff;
   transform: scale(0.9);
 }
 
-.weekly-plan__create-btn:disabled {
-  opacity: 0.4;
+.wp-post__btn:disabled { opacity: 0.4; }
+
+.wp-result__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fp-text-tertiary);
+  transition: color var(--fp-transition);
 }
+
+.wp-result__back:active { color: var(--fp-text); }
 </style>

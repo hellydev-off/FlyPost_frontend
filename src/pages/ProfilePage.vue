@@ -46,7 +46,8 @@ const initials = computed(() => {
 
 const memberSince = computed(() => {
   if (!profile.value) return ''
-  return new Date(profile.value.createdAt).toLocaleDateString('ru-RU', {
+  const locale = localeStore.locale === 'en' ? 'en-US' : 'ru-RU'
+  return new Date(profile.value.createdAt).toLocaleDateString(locale, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -104,6 +105,7 @@ function doLogout(): void {
 }
 
 function clearAndLogout(): void {
+  auth.logout()
   localStorage.clear()
   sessionStorage.clear()
   router.replace({ name: 'welcome' })

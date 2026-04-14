@@ -34,14 +34,14 @@ const { t } = useLocaleStore()
     <div class="channel-card__actions">
       <button
         class="channel-card__action-btn channel-card__action-btn--voice"
-        title="Голос канала"
+        :title="t('channelCard.voiceTitle')"
         @click.stop="$emit('profile', channel.id)"
       >
         <AppIcon name="wand" :size="17" />
       </button>
       <button
         class="channel-card__action-btn channel-card__action-btn--delete"
-        title="Удалить"
+        :title="t('channelCard.deleteTitle')"
         @click.stop="$emit('delete', channel.id)"
       >
         <AppIcon name="trash" :size="17" />

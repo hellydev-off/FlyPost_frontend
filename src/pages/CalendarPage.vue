@@ -31,9 +31,12 @@ const loading = ref(true)
 const showWeeklyPlan = ref(false)
 const showDailyPlan = ref(false)
 
-const publishedPostsCount = computed(() =>
-  postsStore.posts.filter(p => p.channelId === channelsStore.selectedChannelId && p.status === 'published').length
-)
+const publishedPostsCount = computed(() => {
+  const cid = channelsStore.selectedChannelId
+  return postsStore.posts.filter(p =>
+    (p.channelId === cid || p.channel?.id === cid) && p.status === 'published'
+  ).length
+})
 
 const monthLabel = computed(() => `${messages.value.calendar.months[viewMonth.value]} ${viewYear.value}`)
 const WEEKDAYS = computed(() => messages.value.calendar.weekdays)

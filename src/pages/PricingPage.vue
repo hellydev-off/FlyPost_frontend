@@ -174,28 +174,13 @@ async function downgradeFree(): Promise<void> {
         <!-- Coloured top -->
         <div class="pricing__card-top" :class="`pricing__card-top--${plan}`">
           <div class="pricing__card-icon">
-            <!-- Start: rocket -->
-            <svg v-if="plan === 'start'" viewBox="0 0 56 56" fill="none">
-              <circle cx="28" cy="28" r="24" fill="rgba(255,255,255,0.12)"/>
-              <path d="M28 10C28 10 38 15 38 26C38 33 33 38 28 40C23 38 18 33 18 26C18 15 28 10Z" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="1.5"/>
-              <circle cx="28" cy="24" r="4" fill="white" fill-opacity="0.9"/>
-              <path d="M18 34L13 40M38 34L43 40" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
-              <path d="M23.5 38V43L28 46L32.5 43V38" fill="rgba(255,255,255,0.25)" stroke="white" stroke-width="1.3"/>
-              <path d="M25 43L26.5 49M31 43L29.5 49" stroke="rgba(255,220,80,0.95)" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
-            <!-- Pro: lightning -->
-            <svg v-else-if="plan === 'pro'" viewBox="0 0 56 56" fill="none">
-              <circle cx="28" cy="28" r="24" fill="rgba(255,255,255,0.12)"/>
-              <path d="M33 10L18 30H28L22 46L42 22H30L33 10Z" fill="white" fill-opacity="0.9"/>
-            </svg>
-            <!-- Max: crown -->
-            <svg v-else viewBox="0 0 56 56" fill="none">
-              <circle cx="28" cy="28" r="24" fill="rgba(255,255,255,0.12)"/>
-              <path d="M10 36H46V39H10V36Z" fill="rgba(255,255,255,0.7)"/>
-              <path d="M10 36L16 18L28 30L40 18L46 36H10Z" fill="white" fill-opacity="0.88" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
-              <circle cx="16" cy="18" r="3" fill="rgba(255,240,100,0.95)" stroke="white" stroke-width="1"/>
-              <circle cx="28" cy="30" r="3" fill="rgba(255,240,100,0.95)" stroke="white" stroke-width="1"/>
-              <circle cx="40" cy="18" r="3" fill="rgba(255,240,100,0.95)" stroke="white" stroke-width="1"/>
+            <svg
+              v-if="PLAN_META[plan].icon"
+              :viewBox="PLAN_META[plan].icon!.viewBox"
+              fill="white"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path :d="PLAN_META[plan].icon!.path" fill="white"/>
             </svg>
           </div>
 
@@ -265,15 +250,6 @@ async function downgradeFree(): Promise<void> {
     <!-- Free plan — full card -->
     <div class="pricing__free-card" :class="{ 'pricing__free-card--current': isCurrentPlan('free') }">
       <div class="pricing__free-top">
-        <div class="pricing__free-icon-wrap">
-          <svg viewBox="0 0 56 56" fill="none">
-            <circle cx="28" cy="28" r="24" fill="rgba(148,163,184,0.15)"/>
-            <path d="M28 18C24 18 20 22 20 28C20 32 22 35 28 37C34 35 36 32 36 28C36 22 32 18 28 18Z" fill="rgba(148,163,184,0.3)" stroke="#94A3B8" stroke-width="1.5"/>
-            <path d="M24 28C24 25 26 23 28 23" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round"/>
-            <circle cx="28" cy="28" r="3" fill="#94A3B8" fill-opacity="0.7"/>
-            <path d="M22 37L26 43M34 37L30 43" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </div>
         <div>
           <h3 class="pricing__free-name">Free</h3>
           <p class="pricing__free-desc-title">{{ t('pricing.freeForever') }}</p>
@@ -470,9 +446,15 @@ async function downgradeFree(): Promise<void> {
 .pricing__card-top--max   { background: linear-gradient(135deg, #92400e, #F59E0B); }
 
 .pricing__card-icon {
-  width: 52px;
-  height: 52px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+  padding: 7px;
 }
 
 .pricing__card-icon svg { width: 100%; height: 100%; }
@@ -638,14 +620,6 @@ async function downgradeFree(): Promise<void> {
   padding: 16px;
   background: linear-gradient(135deg, #334155, #475569);
 }
-
-.pricing__free-icon-wrap {
-  width: 52px;
-  height: 52px;
-  flex-shrink: 0;
-}
-
-.pricing__free-icon-wrap svg { width: 100%; height: 100%; }
 
 .pricing__free-name {
   font-size: 19px;

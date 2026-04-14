@@ -21,8 +21,10 @@ function isActive(tabName: string): boolean {
   return route.name === tabName
 }
 
+const MORE_ROUTES = new Set(['analytics', 'history', 'templates', 'profile', 'streak', 'scheduler', 'pricing', 'competitors'])
+
 const isMoreActive = computed(() =>
-  route.name === 'analytics' || route.name === 'history'
+  typeof route.name === 'string' && MORE_ROUTES.has(route.name),
 )
 
 function navigate(path: string): void {
@@ -139,9 +141,7 @@ function navigate(path: string): void {
   width: 100%;
   max-width: var(--fp-max-width);
   height: var(--fp-bottom-nav-height);
-  background: color-mix(in srgb, var(--fp-bg) 92%, transparent);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--fp-bg);
   border-top: 1px solid var(--fp-border);
   border-radius: 16px 16px 0 0;
   display: flex;
@@ -150,6 +150,7 @@ function navigate(path: string): void {
   padding-top: 10px;
   z-index: 100;
 }
+
 
 .bottom-nav__item {
   display: flex;

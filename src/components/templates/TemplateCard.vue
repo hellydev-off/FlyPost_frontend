@@ -2,6 +2,7 @@
 import { ref, reactive } from 'vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import type { Template, TemplateCategory } from '@/types/template.types'
 
 const props = defineProps<{ template: Template }>()
@@ -12,16 +13,13 @@ const emit = defineEmits<{
   delete: [id: string]
 }>()
 
-const CATEGORY_LABELS: Record<TemplateCategory, string> = {
-  announcement: 'Анонс',
-  promo: 'Промо',
-  educational: 'Обучение',
-  engagement: 'Вовлечение',
-  news: 'Новости',
-  personal: 'Личное',
-}
+const { t } = useLocaleStore()
 
 const CATEGORIES: TemplateCategory[] = ['announcement', 'promo', 'educational', 'engagement', 'news', 'personal']
+
+function categoryLabel(cat: TemplateCategory): string {
+  return t(`templates.categories.${cat}`)
+}
 
 const isEditing = ref(false)
 const form = reactive({
@@ -64,9 +62,9 @@ function saveEdit(): void {
     <template v-if="!isEditing">
       <div class="tcard__header">
         <span class="tcard__badge" :class="`tcard__badge--${template.category}`">
-          {{ CATEGORY_LABELS[template.category] }}
+          {{ categoryLabel(template.category) }}
         </span>
-        <span class="tcard__usage">{{ template.usageCount }} исп.</span>
+        <span class="tcard__usage">{{ template.usageCount }} {{ t('templates.usageCount') }}</span>
       </div>
 
       <h3 class="tcard__title">{{ template.title }}</h3>
@@ -82,7 +80,7 @@ function saveEdit(): void {
       </div>
 
       <div class="tcard__actions">
-        <AppButton size="sm" @click="emit('use', template)">Использовать</AppButton>
+        <AppButton size="sm" @click="emit('use', template)">{{ t('templates.useBtn') }}</AppButton>
         <button class="tcard__icon-btn" title="Редактировать" @click="startEdit">
           <AppIcon name="draft" :size="17" />
         </button>
@@ -95,25 +93,25 @@ function saveEdit(): void {
     <!-- Edit mode -->
     <template v-else>
       <div class="tcard__edit">
-        <input v-model="form.title" class="tcard__input" placeholder="Название шаблона" />
+        <input v-model="form.title" class="tcard__input" :placeholder="t('templates.namePlaceholder')" />
 
         <select v-model="form.category" class="tcard__input">
           <option v-for="cat in CATEGORIES" :key="cat" :value="cat">
-            {{ CATEGORY_LABELS[cat] }}
+            {{ categoryLabel(cat) }}
           </option>
         </select>
 
-        <textarea v-model="form.content" class="tcard__textarea" placeholder="Текст шаблона..." rows="5" />
+        <textarea v-model="form.content" class="tcard__textarea" :placeholder="t('templates.contentPlaceholder')" rows="5" />
 
         <input
           v-model="form.variablesRaw"
           class="tcard__input"
-          placeholder="Переменные через запятую: product, price"
+          :placeholder="t('templates.variablesPlaceholder')"
         />
 
         <div class="tcard__edit-actions">
-          <AppButton size="sm" @click="saveEdit">Сохранить</AppButton>
-          <AppButton size="sm" variant="ghost" @click="cancelEdit">Отмена</AppButton>
+          <AppButton size="sm" @click="saveEdit">{{ t('templates.saveBtn') }}</AppButton>
+          <AppButton size="sm" variant="ghost" @click="cancelEdit">{{ t('templates.cancelBtn') }}</AppButton>
         </div>
       </div>
     </template>
@@ -123,7 +121,7 @@ function saveEdit(): void {
 <style scoped>
 .tcard {
   background: var(--fp-bg-secondary);
-  border-radius: var(--fp-radius-lg);
+  border-radius: var(--fp-radius);
   padding: var(--fp-spacing);
   display: flex;
   flex-direction: column;

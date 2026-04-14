@@ -67,17 +67,35 @@ export const aiApi = {
     return data
   },
 
-  async weeklyPlan(channelId: string): Promise<WeeklyPlanIdea[]> {
+  async weeklyPlan(channelId: string, postsPerDay: number): Promise<WeeklyPlanIdea[]> {
     if (isMockMode) {
-      return withDelay<WeeklyPlanIdea[]>([
-        { title: 'Тренды недели', summary: 'Обзор главных событий в нише за прошедшую неделю.', suggestedHour: 9 },
-        { title: 'Экспертный разбор', summary: 'Глубокий анализ актуальной темы с практическими советами для аудитории.', suggestedHour: 19 },
-        { title: 'Кейс из практики', summary: 'Реальная история успеха или провала с конкретными выводами.', suggestedHour: 12 },
-        { title: 'Инструменты и лайфхаки', summary: 'Подборка полезных инструментов, которые экономят время.', suggestedHour: 18 },
-        { title: 'Вопрос–ответ', summary: 'Отвечаем на самые частые вопросы подписчиков этой недели.', suggestedHour: 20 },
-      ], 1200)
+      const mockTitles = [
+        'Тренды недели', 'Экспертный разбор', 'Кейс из практики',
+        'Инструменты и лайфхаки', 'Вопрос–ответ', 'Разбор ошибок',
+        'Закулисье канала', 'Подборка ресурсов', 'Советы новичкам',
+        'Обзор инструментов', 'История успеха', 'Новости ниши',
+        'Чек-лист', 'Топ-5 идей', 'Мотивация',
+        'Лайфхаки', 'Аналитика', 'Опрос читателей',
+        'Итоги недели', 'Прогнозы', 'Разбор тренда',
+        'Мнение эксперта', 'Практические советы', 'Планы на неделю',
+        'Вовлечение аудитории', 'Закулисье работы', 'Полезный контент', 'Подводим итоги',
+      ]
+      const hours = [9, 12, 15, 18]
+      const ideas: WeeklyPlanIdea[] = []
+      for (let day = 0; day < 7; day++) {
+        for (let p = 0; p < postsPerDay; p++) {
+          const idx = day * postsPerDay + p
+          ideas.push({
+            dayIndex: day,
+            title: mockTitles[idx % mockTitles.length],
+            summary: 'Краткое описание темы поста для планирования контента на неделю.',
+            suggestedHour: hours[p % hours.length],
+          })
+        }
+      }
+      return withDelay<WeeklyPlanIdea[]>(ideas, 1200)
     }
-    const { data } = await api.post<{ ideas: WeeklyPlanIdea[] }>('/api/ai/weekly-plan', { channelId })
+    const { data } = await api.post<{ ideas: WeeklyPlanIdea[] }>('/api/ai/weekly-plan', { channelId, postsPerDay })
     return data.ideas
   },
 

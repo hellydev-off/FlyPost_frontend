@@ -5,6 +5,7 @@ import { useTemplatesStore } from '@/stores/useTemplatesStore'
 import { usePlanStore } from '@/stores/usePlanStore'
 import { usePostsStore } from '@/stores/usePostsStore'
 import { useChannelsStore } from '@/stores/useChannelsStore'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import TemplateCard from '@/components/templates/TemplateCard.vue'
 import TemplateVarsModal from '@/components/templates/TemplateVarsModal.vue'
 import TemplateFormModal from '@/components/templates/TemplateFormModal.vue'
@@ -15,6 +16,7 @@ const store = useTemplatesStore()
 const postsStore = usePostsStore()
 const channelsStore = useChannelsStore()
 const planStore = usePlanStore()
+const { t } = useLocaleStore()
 
 function openCreate(): void {
   if (planStore.limits.templates === 0) {
@@ -29,14 +31,14 @@ const selectedTemplate = ref<Template | null>(null)
 const varsLoading = ref(false)
 const showCreateModal = ref(false)
 
-const CATEGORIES: Array<{ value: TemplateCategory | null; label: string }> = [
-  { value: null, label: 'Все' },
-  { value: 'announcement', label: 'Анонс' },
-  { value: 'promo', label: 'Промо' },
-  { value: 'educational', label: 'Обучение' },
-  { value: 'engagement', label: 'Вовлечение' },
-  { value: 'news', label: 'Новости' },
-  { value: 'personal', label: 'Личное' },
+const CATEGORY_KEYS: Array<{ value: TemplateCategory | null; key: string }> = [
+  { value: null, key: 'filterAll' },
+  { value: 'announcement', key: 'categories.announcement' },
+  { value: 'promo', key: 'categories.promo' },
+  { value: 'educational', key: 'categories.educational' },
+  { value: 'engagement', key: 'categories.engagement' },
+  { value: 'news', key: 'categories.news' },
+  { value: 'personal', key: 'categories.personal' },
 ]
 
 onMounted(async () => {
@@ -70,19 +72,19 @@ async function applyTemplate(id: string, vars: Record<string, string>): Promise<
 <template>
   <div class="templates-page">
     <div class="templates-page__header">
-      <h1 class="templates-page__title">Шаблоны</h1>
+      <h1 class="templates-page__title">{{ t('templates.title') }}</h1>
     </div>
 
     <!-- Category filter -->
     <div class="templates-page__filter">
       <button
-        v-for="cat in CATEGORIES"
+        v-for="cat in CATEGORY_KEYS"
         :key="String(cat.value)"
         class="templates-page__chip"
         :class="{ 'templates-page__chip--active': store.activeCategory === cat.value }"
         @click="store.setCategory(cat.value)"
       >
-        {{ cat.label }}
+        {{ t('templates.' + cat.key) }}
       </button>
     </div>
 
@@ -94,8 +96,8 @@ async function applyTemplate(id: string, vars: Record<string, string>): Promise<
     <!-- Empty -->
     <div v-else-if="store.filtered.length === 0" class="templates-page__empty">
       <AppIcon name="draft" :size="48" />
-      <p>Шаблонов пока нет</p>
-      <button class="templates-page__empty-btn" @click="openCreate">Создать первый</button>
+      <p>{{ t('templates.noTemplates') }}</p>
+      <button class="templates-page__empty-btn" @click="openCreate">{{ t('templates.createFirst') }}</button>
     </div>
 
     <!-- Grid -->
@@ -137,12 +139,10 @@ async function applyTemplate(id: string, vars: Record<string, string>): Promise<
 
 <style scoped>
 .templates-page {
-  padding: var(--fp-spacing);
   padding-bottom: calc(var(--fp-bottom-nav-height, 72px) + 80px);
   display: flex;
   flex-direction: column;
   gap: var(--fp-spacing);
-  min-height: 100vh;
 }
 
 .templates-page__header {
@@ -238,9 +238,9 @@ async function applyTemplate(id: string, vars: Record<string, string>): Promise<
 
 /* FAB */
 .templates-page__fab {
-  position: fixed;
+  position: sticky;
   bottom: calc(var(--fp-bottom-nav-height, 72px) + 16px);
-  right: 20px;
+  align-self: flex-end;
   width: 56px;
   height: 56px;
   border-radius: 50%;
@@ -250,7 +250,8 @@ async function applyTemplate(id: string, vars: Record<string, string>): Promise<
   justify-content: center;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   transition: transform var(--fp-transition);
-  z-index: 100;
+  z-index: 10;
+  margin-bottom: -56px;
 }
 
 .templates-page__fab:active {

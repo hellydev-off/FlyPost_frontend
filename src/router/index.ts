@@ -80,6 +80,16 @@ const router = createRouter({
       name: 'history',
       component: () => import('@/pages/HistoryPage.vue'),
     },
+    {
+      path: '/streak',
+      name: 'streak',
+      component: () => import('@/pages/StreakPage.vue'),
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/pages/NotFoundPage.vue'),
+    },
   ],
 })
 

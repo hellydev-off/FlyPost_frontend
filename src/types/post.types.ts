@@ -18,6 +18,7 @@ export interface PostPoll {
 export interface Post {
   id: string
   channelId: string
+  channel?: { id: string; title: string }
   content: string
   status: PostStatus
   publishedAt: string | null

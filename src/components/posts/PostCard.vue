@@ -2,6 +2,7 @@
 import type { Post } from '@/types/post.types'
 import PostStatusBadge from './PostStatusBadge.vue'
 import { formatDateTime } from '@/utils/formatDate'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 
 defineProps<{
   post: Post
@@ -10,6 +11,8 @@ defineProps<{
 defineEmits<{
   click: [id: string]
 }>()
+
+const { t } = useLocaleStore()
 </script>
 
 <template>
@@ -18,7 +21,9 @@ defineEmits<{
       <PostStatusBadge :status="post.status" />
       <span class="post-card__date">{{ formatDateTime(post.createdAt) }}</span>
     </div>
-    <p class="post-card__content">{{ post.content }}</p>
+    <p class="post-card__content" :class="{ 'post-card__content--empty': !post.content }">
+      {{ post.content || t('postCard.emptyContent') }}
+    </p>
   </div>
 </template>
 
@@ -57,5 +62,10 @@ defineEmits<{
   -webkit-box-orient: vertical;
   overflow: hidden;
   white-space: pre-wrap;
+}
+
+.post-card__content--empty {
+  color: var(--fp-text-tertiary);
+  font-style: italic;
 }
 </style>

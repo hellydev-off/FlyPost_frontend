@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NeoPost — Demo</title>
+<style>
+/* ─── Reset ─── */
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+/* ─── Outer scene (dark desktop bg) ─── */
+body {
+  background: #060608;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+  overflow: hidden;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 900px 700px at 15% 15%, rgba(59,130,246,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 700px 600px at 85% 85%, rgba(99,102,241,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ─── Start screen ─── */
+.start-screen {
+  display: flex; flex-direction: column; align-items: center; gap: 36px;
+  transition: opacity .5s, transform .5s;
+}
+.start-screen.hidden { opacity: 0; transform: scale(.94) translateY(-16px); pointer-events: none; position: absolute; }
+
+.logo-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.logo-icon {
+  width: 76px; height: 76px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border-radius: 22px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; color: #fff;
+  box-shadow: 0 0 48px rgba(59,130,246,.4), 0 8px 32px rgba(0,0,0,.4);
+  animation: logo-pulse 3s ease-in-out infinite;
+}
+@keyframes logo-pulse {
+  0%,100%{ box-shadow: 0 0 48px rgba(59,130,246,.4), 0 8px 32px rgba(0,0,0,.4); }
+  50%{ box-shadow: 0 0 64px rgba(59,130,246,.6), 0 8px 32px rgba(0,0,0,.4); }
+}
+.logo-name { font-size: 30px; font-weight: 800; color: #f1f5f9; letter-spacing: -.5px; }
+.logo-sub  { font-size: 15px; color: #64748b; text-align: center; line-height: 1.5; }
+
+.btn-start {
+  width: 220px; height: 58px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  border: none; border-radius: 16px;
+  color: #fff; font-size: 16px; font-weight: 700;
+  cursor: pointer; letter-spacing: .2px;
+  box-shadow: 0 4px 24px rgba(59,130,246,.4);
+  transition: transform .15s, box-shadow .15s;
+  position: relative; overflow: hidden;
+}
+.btn-start::before { content:''; position:absolute; inset:0; background: linear-gradient(135deg, rgba(255,255,255,.14), transparent); }
+.btn-start:hover { transform: scale(1.04); box-shadow: 0 6px 32px rgba(59,130,246,.5); }
+.btn-start:active { transform: scale(.97); }
+
+/* ─── Phone shell ─── */
+.phone-wrap {
+  display: none;
+  position: fixed;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .7s cubic-bezier(.2,0,0,1);
+  background: #060608;
+}
+.phone-wrap.visible { opacity: 1; }
+
+.phone-scaler {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  transform-origin: center center;
+}
+
+.phone {
+  /* iPhone 14 proportions: 390x844 */
+  width: 390px;
+  height: 844px;
+  position: relative;
+  border-radius: 50px;
+  background: #ffffff;
+  border: 9px solid #1a1a2e;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.08),
+    0 48px 96px rgba(0,0,0,.7),
+    inset 0 1px 0 rgba(255,255,255,.12);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Notch */
+.phone::before {
+  content: '';
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 120px; height: 34px;
+  background: #1a1a2e;
+  border-radius: 0 0 22px 22px;
+  z-index: 200;
+}
+
+/* ─── App CSS variables (light theme) ─── */
+.phone {
+  --fp-primary: #3b82f6;
+  --fp-primary-light: #60a5fa;
+  --fp-primary-dark: #2563eb;
+  --fp-primary-bg: rgba(59,130,246,.08);
+  --fp-bg: #ffffff;
+  --fp-bg-secondary: #f1f5f9;
+  --fp-bg-tertiary: #e2e8f0;
+  --fp-text: #0f172a;
+  --fp-text-secondary: #64748b;
+  --fp-text-tertiary: #94a3b8;
+  --fp-border: #e2e8f0;
+  --fp-success: #22c55e;
+  --fp-error: #ef4444;
+  --fp-warning: #f59e0b;
+  --fp-radius: 14px;
+  --fp-radius-sm: 10px;
+  --fp-spacing: 16px;
+  --fp-spacing-sm: 8px;
+  --fp-spacing-lg: 24px;
+  --fp-transition: .2s ease;
+  --fp-bottom-nav-height: 64px;
+}
+
+/* ─── Status bar ─── */
+.status-bar {
+  flex-shrink: 0;
+  height: 52px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 28px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fp-text);
+  background: var(--fp-bg);
+  position: relative;
+  z-index: 10;
+}
+.status-bar-right { display: flex; gap: 5px; align-items: center; font-size: 12px; }
+
+/* ─── App content ─── */
+.app-body {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: var(--fp-bg);
+}
+
+/* ─── Screens ─── */
+.screen { position: absolute; inset: 0; display: none; flex-direction: column; overflow-y: auto; }
+.screen.active { display: flex; animation: screenIn .35s cubic-bezier(.4,0,.2,1); }
+@keyframes screenIn { from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+
+/* ─── HOME SCREEN ─── */
+.home-screen { padding: 20px 16px 100px; }
+
+.home-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--fp-spacing-lg);
+}
+.home-label { font-size: 14px; color: var(--fp-text-secondary); margin-bottom: 2px; }
+.home-greeting { font-size: 26px; font-weight: 800; color: var(--fp-text); }
+.home-header-right { display: flex; align-items: center; gap: 8px; }
+.plan-badge {
+  display: flex; align-items: center; gap: 4px;
+  padding: 5px 10px;
+  border-radius: 20px; border: 1.5px solid rgba(59,130,246,.4);
+  font-size: 12px; font-weight: 700; color: var(--fp-primary);
+  background: transparent;
+}
+.avatar-btn {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--fp-primary), var(--fp-primary-dark));
+  color: #fff; font-size: 17px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(59,130,246,.25);
+}
+
+.insights-row { display: flex; align-items: center; gap: 12px; margin-bottom: var(--fp-spacing); }
+.streak-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  background: rgba(245,158,11,.1); border: 1.5px solid rgba(245,158,11,.25);
+  border-radius: 20px;
+}
+.streak-num { font-size: 16px; font-weight: 800; color: #f59e0b; }
+.streak-lbl { font-size: 13px; color: var(--fp-text-secondary); }
+.health-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  background: var(--fp-bg-secondary); border-radius: 20px;
+}
+.health-score { font-size: 16px; font-weight: 800; color: var(--fp-success); }
+.health-lbl { font-size: 13px; color: var(--fp-text-secondary); }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-card {
+  padding: 14px; background: var(--fp-bg-secondary);
+  border-radius: var(--fp-radius); text-align: center;
+  animation: fadeInUp .4s both;
+}
+.stat-card:nth-child(2){ animation-delay: 50ms; }
+.stat-card:nth-child(3){ animation-delay: 100ms; }
+.stat-card:nth-child(4){ animation-delay: 150ms; }
+@keyframes fadeInUp { from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:translateY(0); } }
+.stat-val { font-size: 26px; font-weight: 800; color: var(--fp-text); line-height: 1.2; }
+.stat-lbl { font-size: 12px; color: var(--fp-text-secondary); margin-top: 4px; }
+
+.create-btn {
+  width: 100%; height: 50px; margin-top: 16px;
+  background: linear-gradient(135deg, var(--fp-primary), var(--fp-primary-dark));
+  border: none; border-radius: var(--fp-radius);
+  color: #fff; font-size: 15px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 16px rgba(59,130,246,.3);
+  cursor: pointer; transition: transform .15s;
+  position: relative; overflow: hidden;
+}
+.create-btn::before { content:''; position:absolute; inset:0; background: linear-gradient(135deg, rgba(255,255,255,.1), transparent); }
+.create-btn:active { transform: scale(.98); }
+
+.section-title { font-size: 17px; font-weight: 700; color: var(--fp-text); margin-bottom: 10px; }
+
+.post-card {
+  padding: 14px; background: var(--fp-bg-secondary);
+  border-radius: var(--fp-radius); cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--fp-transition);
+  margin-bottom: 8px;
+  animation: fadeInUp .4s both;
+}
+.post-card:nth-child(2){ animation-delay: 60ms; }
+.post-card:nth-child(3){ animation-delay: 120ms; }
+.post-card:active { background: var(--fp-bg-tertiary); }
+.post-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.post-card-date { font-size: 12px; color: var(--fp-text-tertiary); }
+.post-card-text { font-size: 14px; line-height: 1.5; color: var(--fp-text);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 6px;
+  font-size: 11px; font-weight: 700;
+}
+.status-published { background: rgba(34,197,94,.1); color: #16a34a; }
+.status-draft     { background: rgba(148,163,184,.1); color: #64748b; }
+.status-scheduled { background: rgba(59,130,246,.1);  color: #2563eb; }
+
+/* ─── CREATE POST SCREEN ─── */
+.create-screen { padding: 16px; padding-bottom: 100px; }
+
+.create-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.back-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--fp-bg-secondary); border: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: var(--fp-text); cursor: pointer;
+}
+.create-title { font-size: 20px; font-weight: 800; color: var(--fp-text); }
+
+.channel-selector {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  background: var(--fp-bg-secondary); border-radius: var(--fp-radius);
+  border: 1.5px solid var(--fp-border);
+  margin-bottom: 14px;
+}
+.ch-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--fp-primary), var(--fp-primary-dark));
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+}
+.ch-name { font-size: 14px; font-weight: 700; color: var(--fp-text); }
+.ch-subs { font-size: 12px; color: var(--fp-text-tertiary); }
+.ch-check { margin-left: auto; font-size: 16px; color: var(--fp-success); }
+
+.textarea-wrap { position: relative; margin-bottom: 12px; }
+.post-textarea {
+  width: 100%; min-height: 180px;
+  padding: 14px; padding-bottom: 40px;
+  background: var(--fp-bg-secondary);
+  border: 1.5px solid var(--fp-border);
+  border-radius: var(--fp-radius);
+  color: var(--fp-text); font-size: 15px; font-family: inherit;
+  line-height: 1.6; resize: none; outline: none;
+  transition: border-color .2s;
+  caret-color: var(--fp-primary);
+}
+.post-textarea:focus { border-color: rgba(59,130,246,.4); }
+.textarea-count {
+  position: absolute; bottom: 10px; right: 12px;
+  font-size: 11px; color: var(--fp-text-tertiary);
+}
+.cursor-blink {
+  display: inline-block; width: 2px; height: 1em;
+  background: var(--fp-primary); border-radius: 1px;
+  vertical-align: text-bottom;
+  animation: blink .8s infinite;
+}
+@keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+/* AI bar */
+.ai-bar {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 10px 12px;
+  background: rgba(59,130,246,.05);
+  border: 1px solid rgba(59,130,246,.12);
+  border-radius: var(--fp-radius-sm);
+  margin-bottom: 14px;
+  opacity: 0; transform: translateY(6px);
+  transition: all .4s;
+}
+.ai-bar.show { opacity: 1; transform: translateY(0); }
+.ai-bar-label { font-size: 11px; font-weight: 700; color: var(--fp-primary); width: 100%; margin-bottom: 2px; }
+
+.ai-chip {
+  display: flex; align-items: center; gap: 5px;
+  padding: 6px 11px;
+  background: var(--fp-bg); border: 1.5px solid var(--fp-border);
+  border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--fp-text-secondary);
+  cursor: pointer; transition: all .2s; white-space: nowrap;
+}
+.ai-chip:hover { border-color: rgba(59,130,246,.3); color: var(--fp-primary); }
+.ai-chip.active { background: rgba(59,130,246,.1); border-color: rgba(59,130,246,.35); color: var(--fp-primary); }
+
+/* AI generate block */
+.ai-generate {
+  padding: 14px;
+  background: linear-gradient(135deg, rgba(59,130,246,.06), rgba(37,99,235,.04));
+  border: 1.5px solid rgba(59,130,246,.15);
+  border-radius: var(--fp-radius);
+  margin-bottom: 14px;
+}
+.ai-generate-top { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.ai-spark { font-size: 18px; }
+.ai-generate-title { font-size: 14px; font-weight: 700; color: var(--fp-text); }
+.ai-badge {
+  margin-left: auto; padding: 3px 8px;
+  background: rgba(59,130,246,.1); border: 1px solid rgba(59,130,246,.2);
+  border-radius: 6px; font-size: 10px; font-weight: 700; color: var(--fp-primary);
+}
+.ai-input {
+  width: 100%; padding: 10px 12px;
+  background: var(--fp-bg); border: 1.5px solid var(--fp-border);
+  border-radius: var(--fp-radius-sm);
+  color: var(--fp-text); font-size: 14px; font-family: inherit;
+  outline: none; transition: border-color .2s;
+  margin-bottom: 10px;
+}
+.ai-input:focus { border-color: rgba(59,130,246,.4); }
+
+.tone-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.tone-chip {
+  padding: 5px 10px;
+  background: var(--fp-bg); border: 1.5px solid var(--fp-border);
+  border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--fp-text-secondary);
+  cursor: pointer; transition: all .2s;
+}
+.tone-chip.active { background: var(--fp-primary-bg); border-color: rgba(59,130,246,.3); color: var(--fp-primary); }
+
+.btn-ai-gen {
+  width: 100%; height: 42px;
+  background: linear-gradient(135deg, var(--fp-primary), var(--fp-primary-dark));
+  border: none; border-radius: var(--fp-radius-sm);
+  color: #fff; font-size: 14px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; transition: transform .15s;
+  position: relative; overflow: hidden;
+}
+.btn-ai-gen::before { content:''; position:absolute; inset:0; background: linear-gradient(135deg,rgba(255,255,255,.1),transparent); }
+
+/* Generating overlay */
+.generating-overlay {
+  position: absolute; inset: 0;
+  background: var(--fp-bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 24px;
+  padding: 32px;
+  z-index: 50;
+  text-align: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s;
+}
+.generating-overlay.show { opacity: 1; pointer-events: all; }
+
+.ai-orb { width: 72px; height: 72px; position: relative; }
+.ai-ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  border: 2px solid transparent;
+  animation: spin 1.6s linear infinite;
+}
+.ai-ring:nth-child(1) {
+  background: linear-gradient(var(--fp-bg),var(--fp-bg)) padding-box,
+              linear-gradient(135deg, var(--fp-primary), transparent) border-box;
+}
+.ai-ring:nth-child(2) {
+  inset: 12px;
+  background: linear-gradient(var(--fp-bg),var(--fp-bg)) padding-box,
+              linear-gradient(225deg, #8b5cf6, transparent) border-box;
+  animation-duration: 2.2s; animation-direction: reverse;
+}
+.ai-ring:nth-child(3) {
+  inset: 22px;
+  background: linear-gradient(var(--fp-bg),var(--fp-bg)) padding-box,
+              linear-gradient(315deg, var(--fp-primary-light), transparent) border-box;
+  animation-duration: 1.1s;
+}
+.ai-core {
+  position: absolute; inset: 28px;
+  background: linear-gradient(135deg, var(--fp-primary), #8b5cf6);
+  border-radius: 50%;
+  box-shadow: 0 0 16px rgba(59,130,246,.4);
+  animation: core-pulse 1.5s ease-in-out infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes core-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+
+.gen-title { font-size: 18px; font-weight: 700; color: var(--fp-text); }
+
+.gen-steps { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.gen-step {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: var(--fp-bg-secondary);
+  border-radius: var(--fp-radius-sm);
+  font-size: 13px; color: var(--fp-text-tertiary);
+  opacity: 0; transform: translateX(-8px);
+  transition: all .35s;
+}
+.gen-step.cur { opacity:1; transform:translateX(0); color:var(--fp-text); border:1px solid rgba(59,130,246,.15); }
+.gen-step.done { opacity:1; transform:translateX(0); color:var(--fp-text-secondary); }
+.gen-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--fp-bg-tertiary); flex-shrink: 0;
+  transition: background .3s;
+}
+.gen-step.cur .gen-dot { background: var(--fp-primary); animation: dot-pulse .8s infinite; }
+.gen-step.done .gen-dot { background: var(--fp-success); }
+@keyframes dot-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.5)} }
+
+/* Action buttons row */
+.action-row {
+  display: flex; gap: 8px; margin-top: 14px;
+}
+.btn-draft {
+  flex: 1; height: 48px;
+  background: var(--fp-bg-secondary); border: 1.5px solid var(--fp-border);
+  border-radius: var(--fp-radius); font-size: 14px; font-weight: 700;
+  color: var(--fp-text-secondary); cursor: pointer; transition: all .15s;
+}
+.btn-draft:active { background: var(--fp-bg-tertiary); }
+.btn-publish-now {
+  flex: 2; height: 48px;
+  background: linear-gradient(135deg, var(--fp-primary), var(--fp-primary-dark));
+  border: none; border-radius: var(--fp-radius);
+  font-size: 14px; font-weight: 700; color: #fff;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; transition: transform .15s;
+  box-shadow: 0 4px 14px rgba(59,130,246,.3);
+  position: relative; overflow: hidden;
+}
+.btn-publish-now::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,.1),transparent); }
+.btn-publish-now.loading { opacity: .7; }
+
+/* ─── SUCCESS SCREEN ─── */
+.success-screen {
+  padding: 32px 20px 100px;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+  text-align: center;
+}
+.success-ring { width: 88px; height: 88px; position: relative; margin-bottom: 4px; }
+.success-ring svg {
+  position: absolute; inset: 0;
+  stroke-dasharray: 251; stroke-dashoffset: 251;
+  animation: ring-draw .8s cubic-bezier(.2,0,0,1) forwards;
+}
+@keyframes ring-draw { to { stroke-dashoffset: 0; } }
+.success-icon {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 36px;
+  animation: icon-pop .4s .6s cubic-bezier(.34,1.56,.64,1) both;
+  transform: scale(0);
+}
+@keyframes icon-pop { to{ transform: scale(1); } }
+.success-h  { font-size: 22px; font-weight: 800; color: var(--fp-text); }
+.success-p  { font-size: 14px; color: var(--fp-text-secondary); line-height: 1.5; }
+
+.success-stats { display: flex; gap: 10px; width: 100%; }
+.ss-card {
+  flex: 1; padding: 14px; background: var(--fp-bg-secondary);
+  border-radius: var(--fp-radius); text-align: center;
+  opacity: 0; transform: translateY(8px);
+}
+.ss-card.in { animation: fadeInUp .4s cubic-bezier(.2,0,0,1) forwards; }
+.ss-card:nth-child(2).in { animation-delay: 80ms; }
+.ss-card:nth-child(3).in { animation-delay: 160ms; }
+.ss-num { font-size: 20px; font-weight: 800; color: var(--fp-primary); }
+.ss-lbl { font-size: 11px; color: var(--fp-text-tertiary); margin-top: 3px; }
+
+.btn-back-home {
+  width: 100%; height: 48px;
+  background: var(--fp-bg-secondary); border: 1.5px solid var(--fp-border);
+  border-radius: var(--fp-radius); font-size: 14px; font-weight: 700; color: var(--fp-text);
+  cursor: pointer; transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 72px;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--fp-border);
+  border-radius: 16px 16px 0 0;
+  display: flex; align-items: flex-start; justify-content: space-around;
+  padding-top: 10px; padding-bottom: 8px;
+  z-index: 100;
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  flex: 1; padding: 4px 0;
+  color: var(--fp-text-tertiary); text-decoration: none;
+  transition: color var(--fp-transition); cursor: pointer;
+  font-size: 10px; font-weight: 500;
+}
+.nav-item.active { color: var(--fp-primary); }
+.nav-item svg { transition: color var(--fp-transition); }
+.nav-create {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  flex: 1; cursor: pointer;
+}
+.nav-create-btn {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--fp-primary), var(--fp-primary-dark));
+  display: flex; align-items: center; justify-content: center;
+  margin-top: -20px;
+  box-shadow: 0 4px 16px rgba(59,130,246,.35);
+  transition: transform var(--fp-transition), box-shadow var(--fp-transition);
+}
+.nav-create-btn:active { transform: scale(.92); }
+
+/* ─── PROGRESS DOTS ─── */
+.progress-dots { display: flex; gap: 6px; }
+.pdot {
+  width: 6px; height: 6px; border-radius: 3px;
+  background: #2a2a3a; border: 1.5px solid #3a3a4a;
+  transition: all .3s;
+}
+.pdot.done { background: rgba(59,130,246,.4); border-color: rgba(59,130,246,.4); }
+.pdot.active { background: #3b82f6; border-color: #3b82f6; width: 18px; }
+
+/* ─── Confetti ─── */
+.confetti-wrap { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 9999; }
+.cf { position: absolute; top: -10px; border-radius: 2px; animation: cf-fall linear forwards; }
+@keyframes cf-fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+
+/* SVG icons helpers */
+svg { display: block; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<div class="confetti-wrap" id="confetti"></div>
+
+<!-- ── START SCREEN ── -->
+<div id="startScreen">
+  <div class="logo-wrap">
+    <div class="logo-icon"><svg width="36" height="36" fill="none" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(255,255,255,.2)"/></svg></div>
+    <div class="logo-name">NeoPost</div>
+    <div class="logo-sub">AI-платформа для Telegram-каналов.<br>Генерируй, редактируй, публикуй.</div>
+  </div>
+  <button class="btn-start" onclick="startDemo()">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" style="margin-right:6px;vertical-align:middle"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Смотреть демо
+  </button>
+</div>
+
+<!-- ── PHONE ── -->
+<div class="phone-wrap" id="phoneWrap">
+ <div class="phone-scaler" id="phoneScaler">
+  <div class="phone" id="phone">
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span>9:41</span>
+      <div class="status-bar-right">
+        <svg width="16" height="11" fill="currentColor" viewBox="0 0 16 11"><rect x="0" y="4" width="3" height="7" rx="1"/><rect x="4" y="2" width="3" height="9" rx="1"/><rect x="8" y="0" width="3" height="11" rx="1"/><rect x="12" y="0" width="3" height="11" rx="1" opacity=".3"/></svg>
+        <svg width="15" height="11" fill="currentColor" viewBox="0 0 15 11"><path d="M7.5 2.5C9.8 2.5 11.8 3.4 13.3 4.8L14.7 3.3C12.8 1.6 10.3.5 7.5.5S2.2 1.6.3 3.3L1.7 4.8C3.2 3.4 5.2 2.5 7.5 2.5Z" opacity=".4"/><path d="M7.5 5.5C9 5.5 10.3 6.1 11.3 7L12.7 5.5C11.3 4.2 9.5 3.5 7.5 3.5S3.7 4.2 2.3 5.5L3.7 7C4.7 6.1 6 5.5 7.5 5.5Z" opacity=".7"/><circle cx="7.5" cy="9.5" r="1.5"/></svg>
+        <svg width="25" height="12" fill="currentColor" viewBox="0 0 25 12"><rect x=".5" y=".5" width="21" height="11" rx="3.5" stroke="currentColor" stroke-opacity=".35" fill="none"/><rect x="22.5" y="3.5" width="2" height="5" rx="1" fill="currentColor" opacity=".4"/><rect x="2" y="2" width="18" height="8" rx="2" fill="currentColor"/></svg>
+      </div>
+    </div>
+
+    <!-- App body -->
+    <div class="app-body" id="appBody">
+
+      <!-- HOME -->
+      <div class="screen active" id="screenHome">
+        <div class="home-screen">
+          <div class="home-header">
+            <div>
+              <div class="home-label">Добро пожаловать 👋</div>
+              <div class="home-greeting">Helly</div>
+            </div>
+            <div class="home-header-right">
+              <div class="plan-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg> MAX</div>
+              <div class="avatar-btn">H</div>
+            </div>
+          </div>
+
+          <div class="insights-row">
+            <div class="streak-pill">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 2c-4 4-4 8-2 11-2-1-3-3-3-5-2 4 0 9 5 11 7-2 9-8 7-13-1 2-3 3-5 3 2-2 2-6-2-7z" stroke="#f59e0b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="rgba(245,158,11,.15)"/></svg>
+              <span class="streak-num">7</span>
+              <span class="streak-lbl">дней подряд</span>
+            </div>
+            <div class="health-pill">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="#22c55e" stroke-width="2" fill="rgba(34,197,94,.15)"/></svg>
+              <span class="health-score">87</span>
+              <span class="health-lbl">здоровье</span>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-val">38</div><div class="stat-lbl">Всего</div></div>
+            <div class="stat-card"><div class="stat-val" style="color:#22c55e">30</div><div class="stat-lbl">Опубликовано</div></div>
+            <div class="stat-card"><div class="stat-val" style="color:#3b82f6">3</div><div class="stat-lbl">Запланировано</div></div>
+            <div class="stat-card"><div class="stat-val">5</div><div class="stat-lbl">Черновики</div></div>
+          </div>
+
+          <button class="create-btn" onclick="goToCreate()">
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+            Создать пост
+          </button>
+
+          <div style="margin-top:20px">
+            <div class="section-title">Последние посты</div>
+            <div class="post-card">
+              <div class="post-card-head">
+                <span class="status-badge status-published"><svg width="7" height="7" viewBox="0 0 8 8" fill="currentColor" style="display:inline;vertical-align:middle;margin-right:3px"><circle cx="4" cy="4" r="3"/></svg>Опубликован</span>
+                <span class="post-card-date">сегодня, 11:30</span>
+              </div>
+              <div class="post-card-text">🎵 Музыкальные тренды 2025: что звучит сегодня. Мир музыки меняется стремительно...</div>
+            </div>
+            <div class="post-card">
+              <div class="post-card-head">
+                <span class="status-badge status-scheduled"><svg width="7" height="7" viewBox="0 0 8 8" fill="currentColor" style="display:inline;vertical-align:middle;margin-right:3px"><circle cx="4" cy="4" r="3"/></svg>Запланирован</span>
+                <span class="post-card-date">завтра, 18:00</span>
+              </div>
+              <div class="post-card-text">🎸 Пятничный плейлист уже здесь! 10 треков для идеального конца недели...</div>
+            </div>
+            <div class="post-card">
+              <div class="post-card-head">
+                <span class="status-badge status-draft"><svg width="7" height="7" viewBox="0 0 8 8" fill="currentColor" style="display:inline;vertical-align:middle;margin-right:3px"><circle cx="4" cy="4" r="3"/></svg>Черновик</span>
+                <span class="post-card-date">вчера</span>
+              </div>
+              <div class="post-card-text">📻 Радио умерло? Совсем нет. Подкасты — это радио 2.0. Только ты сам выбираешь...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CREATE POST -->
+      <div class="screen" id="screenCreate">
+        <div class="create-screen" style="position:relative">
+
+          <!-- Generating overlay -->
+          <div class="generating-overlay" id="genOverlay">
+            <div class="ai-orb">
+              <div class="ai-ring"></div>
+              <div class="ai-ring"></div>
+              <div class="ai-ring"></div>
+              <div class="ai-core"></div>
+            </div>
+            <div class="gen-title">ИИ создаёт пост...</div>
+            <div class="gen-steps">
+              <div class="gen-step" id="gs1"><div class="gen-dot"></div><span>Анализирую тему и аудиторию</span></div>
+              <div class="gen-step" id="gs2"><div class="gen-dot"></div><span>Подбираю структуру и тон</span></div>
+              <div class="gen-step" id="gs3"><div class="gen-dot"></div><span>Генерирую текст</span></div>
+              <div class="gen-step" id="gs4"><div class="gen-dot"></div><span>Добавляю хэштеги и эмодзи</span></div>
+            </div>
+          </div>
+
+          <div class="create-header">
+            <button class="back-btn" onclick="goHome()"><svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <div class="create-title">Новый пост</div>
+          </div>
+
+          <!-- Channel -->
+          <div class="channel-selector">
+            <div class="ch-icon"><svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" stroke="#fff" stroke-width="2"/><circle cx="18" cy="16" r="3" stroke="#fff" stroke-width="2"/></svg></div>
+            <div>
+              <div class="ch-name">Music Story Russia</div>
+              <div class="ch-subs">3 420 подписчиков</div>
+            </div>
+            <div class="ch-check"><svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          </div>
+
+          <!-- AI generate block -->
+          <div class="ai-generate" id="aiBlock">
+            <div class="ai-generate-top">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(59,130,246,.1)"/></svg>
+              <span class="ai-generate-title">Генерация с ИИ</span>
+            </div>
+            <input class="ai-input" id="aiInput" placeholder="Тема поста..." autocomplete="off" />
+            <div class="tone-row">
+              <div class="tone-chip active" onclick="pickTone(this)"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg> Экспертный</div>
+              <div class="tone-chip" onclick="pickTone(this)"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M12 2l1.5 4.5H18l-3.7 2.7 1.4 4.3L12 11l-3.7 2.5 1.4-4.3L6 6.5h4.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg> Вдохновляющий</div>
+              <div class="tone-chip" onclick="pickTone(this)"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M8 14s1.5 2 4 2 4-2 4-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/></svg> Дружелюбный</div>
+              <div class="tone-chip" onclick="pickTone(this)"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Продающий</div>
+            </div>
+            <button class="btn-ai-gen" id="btnAiGen" onclick="runGenerate()">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Сгенерировать
+            </button>
+          </div>
+
+          <!-- Textarea -->
+          <div class="textarea-wrap">
+            <textarea class="post-textarea" id="postTextarea" placeholder="Текст поста..."></textarea>
+            <div class="textarea-count" id="charCount">0 / 4096</div>
+          </div>
+
+          <!-- AI tools (appear after generation) -->
+          <div class="ai-bar" id="aiBar">
+            <div class="ai-bar-label"><svg width="11" height="11" fill="none" viewBox="0 0 24 24" style="display:inline;vertical-align:middle;margin-right:4px"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>ИИ-инструменты</div>
+            <div class="ai-chip" id="chipTone" onclick="triggerTool('tone')"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Тон</div>
+            <div class="ai-chip" id="chipExpand" onclick="triggerTool('expand')"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Расширить</div>
+            <div class="ai-chip" id="chipShorten" onclick="triggerTool('shorten')"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2"/></svg> Сократить</div>
+            <div class="ai-chip" id="chipFix" onclick="triggerTool('fix')"><svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> Исправить</div>
+          </div>
+
+          <!-- Actions -->
+          <div class="action-row" id="actionRow" style="opacity:0;transition:opacity .4s">
+            <button class="btn-draft">Черновик</button>
+            <button class="btn-publish-now" id="btnPublish" onclick="doPublish()">
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              Опубликовать
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUCCESS -->
+      <div class="screen" id="screenSuccess">
+        <div class="success-screen">
+          <div class="success-ring">
+            <svg viewBox="0 0 88 88" fill="none">
+              <circle cx="44" cy="44" r="40" stroke="url(#sg)" stroke-width="3" stroke-linecap="round"/>
+              <defs><linearGradient id="sg" x1="0" y1="0" x2="88" y2="88">
+                <stop offset="0%" stop-color="#22c55e"/>
+                <stop offset="100%" stop-color="#16a34a"/>
+              </linearGradient></defs>
+            </svg>
+            <div class="success-icon"><svg width="36" height="36" fill="none" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" stroke="#22c55e" stroke-width="1.8" fill="rgba(34,197,94,.2)"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" fill="rgba(34,197,94,.15)"/><circle cx="17" cy="7" r="1.5" fill="#22c55e"/></svg></div>
+          </div>
+          <div class="success-h">Пост опубликован!</div>
+          <div class="success-p">Пост отправлен в канал<br><strong>Music Story Russia</strong></div>
+
+          <div class="success-stats">
+            <div class="ss-card" id="ss1">
+              <div class="ss-num" id="viewCount">0</div>
+              <div class="ss-lbl">просмотров</div>
+            </div>
+            <div class="ss-card" id="ss2">
+              <div class="ss-num">3 420</div>
+              <div class="ss-lbl">подписчиков</div>
+            </div>
+            <div class="ss-card" id="ss3">
+              <div class="ss-num" style="display:flex;align-items:center;justify-content:center;gap:4px"><svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/></svg>MAX</div>
+              <div class="ss-lbl">план</div>
+            </div>
+          </div>
+          <button class="btn-back-home" onclick="goHome()">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Вернуться на главную
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /app-body -->
+
+    <!-- Bottom nav -->
+    <div class="bottom-nav">
+      <div class="nav-item active" id="navHome" onclick="goHome()">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M3 12L12 3l9 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M5 10v10h5v-6h4v6h5V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Главная
+      </div>
+      <div class="nav-item" onclick="goHome()">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Каналы
+      </div>
+      <div class="nav-create" onclick="goToCreate()">
+        <div class="nav-create-btn">
+          <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+      <div class="nav-item" onclick="goHome()">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/><path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Календарь
+      </div>
+      <div class="nav-item" onclick="goHome()">
+        <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="2"/><circle cx="15" cy="15" r="6" stroke="currentColor" stroke-width="2"/></svg>
+        Ещё
+      </div>
+    </div>
+
+  </div><!-- /phone -->
+
+  <!-- Progress dots -->
+  <div class="progress-dots">
+    <div class="pdot active" id="pd1"></div>
+    <div class="pdot" id="pd2"></div>
+    <div class="pdot" id="pd3"></div>
+  </div>
+ </div><!-- /phone-scaler -->
+</div><!-- /phone-wrap -->
+
+<script>
+const POST_CONTENT = `🎵 Музыкальные тренды 2025: что звучит сегодня
+
+Мир музыки меняется стремительно. Вот главное:
+
+→ AI-коллаборации — артисты работают с нейросетями как соавторами
+→ Vinyl revival: продажи выросли на 22% за год
+→ Короткие форматы до 90 сек захватывают чарты
+→ Гиперлокальная музыка — слушатели ищут "своих"
+
+Какой тренд удивляет тебя больше? 👇
+
+#музыка #тренды2025 #MusicStory`;
+
+function scalePhone() {
+  const scaler = document.getElementById('phoneScaler');
+  if (!scaler) return;
+  // phone: 390×844, dots: 22px, gap: 16px → total height = 844+16+22 = 882
+  const phoneW = 390 + 18; // phone border
+  const phoneH = 844 + 18 + 16 + 22; // phone + border + gap + dots
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const padding = 24; // breathing room
+  const scale = Math.min((vw - padding) / phoneW, (vh - padding) / phoneH);
+  scaler.style.transform = `scale(${Math.min(scale, 1)})`;
+}
+
+function startDemo() {
+  document.getElementById('startScreen').classList.add('hidden');
+  setTimeout(() => {
+    const pw = document.getElementById('phoneWrap');
+    pw.style.display = 'flex';
+    scalePhone();
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      pw.classList.add('visible');
+      setTimeout(() => autoTypeAndGenerate(), 900);
+    }));
+  }, 450);
+}
+
+window.addEventListener('resize', scalePhone);
+
+function goToCreate() {
+  showScreen('screenCreate');
+  updateDots(2);
+  setNavActive(null);
+}
+
+function goHome() {
+  showScreen('screenHome');
+  updateDots(1);
+  setNavActive('navHome');
+  // Reset create screen
+  document.getElementById('aiInput').value = '';
+  document.getElementById('postTextarea').value = '';
+  document.getElementById('charCount').textContent = '0 / 4096';
+  document.getElementById('aiBar').classList.remove('show');
+  document.getElementById('actionRow').style.opacity = '0';
+  document.getElementById('genOverlay').classList.remove('show');
+  document.querySelectorAll('.gen-step').forEach(s => { s.classList.remove('cur','done'); });
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function setNavActive(id) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (id) document.getElementById(id).classList.add('active');
+}
+
+function updateDots(n) {
+  for (let i = 1; i <= 3; i++) {
+    const d = document.getElementById('pd' + i);
+    d.classList.remove('active', 'done');
+    if (i < n) d.classList.add('done');
+    else if (i === n) d.classList.add('active');
+  }
+}
+
+function pickTone(el) {
+  document.querySelectorAll('.tone-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── Auto demo sequence ──
+function autoTypeAndGenerate() {
+  goToCreate();
+  setTimeout(() => {
+    const inp = document.getElementById('aiInput');
+    const topic = 'тренды музыки в 2025 году';
+    let i = 0;
+    inp.focus();
+    const t = setInterval(() => {
+      if (i < topic.length) { inp.value += topic[i++]; }
+      else { clearInterval(t); setTimeout(runGenerate, 600); }
+    }, 55);
+  }, 400);
+}
+
+function runGenerate() {
+  const overlay = document.getElementById('genOverlay');
+  overlay.classList.add('show');
+
+  const steps = ['gs1','gs2','gs3','gs4'];
+  const delays = [300, 850, 1500, 2250];
+
+  steps.forEach((id, i) => {
+    setTimeout(() => {
+      if (i > 0) {
+        const prev = document.getElementById(steps[i-1]);
+        prev.classList.remove('cur'); prev.classList.add('done');
+        prev.querySelector('.gen-dot').style.background = 'var(--fp-success)';
+      }
+      document.getElementById(id).classList.add('cur');
+    }, delays[i]);
+  });
+
+  setTimeout(() => {
+    const last = document.getElementById('gs4');
+    last.classList.remove('cur'); last.classList.add('done');
+    last.querySelector('.gen-dot').style.background = 'var(--fp-success)';
+  }, 3200);
+
+  setTimeout(() => {
+    overlay.classList.remove('show');
+    showGeneratedText(() => {
+      // Show tools & action row
+      document.getElementById('aiBar').classList.add('show');
+      document.getElementById('actionRow').style.opacity = '1';
+      // Auto tools demo
+      setTimeout(autoToolsDemo, 800);
+    });
+  }, 3700);
+}
+
+function showGeneratedText(onDone) {
+  const ta = document.getElementById('postTextarea');
+  ta.value = '';
+  let i = 0;
+  const text = POST_CONTENT;
+
+  const interval = setInterval(() => {
+    if (i < text.length) {
+      // Speed burst in the middle
+      const chunk = (i > 40 && i < text.length - 30) ? 4 : 1;
+      ta.value += text.slice(i, i + chunk);
+      i += chunk;
+      ta.scrollTop = ta.scrollHeight;
+      document.getElementById('charCount').textContent = `${ta.value.length} / 4096`;
+    } else {
+      clearInterval(interval);
+      if (onDone) onDone();
+    }
+  }, 20);
+}
+
+function triggerTool(tool) {
+  document.querySelectorAll('.ai-chip').forEach(c => c.classList.remove('active'));
+  const chipMap = { tone: 'chipTone', expand: 'chipExpand', shorten: 'chipShorten', fix: 'chipFix' };
+  const chip = document.getElementById(chipMap[tool]);
+  if (chip) chip.classList.add('active');
+
+  if (tool === 'expand') {
+    // Make text bigger temporarily
+    document.getElementById('postTextarea').style.fontSize = '17px';
+    setTimeout(() => {
+      document.getElementById('postTextarea').style.fontSize = '';
+      chip.classList.remove('active');
+    }, 1200);
+  } else if (tool === 'shorten') {
+    setTimeout(() => chip.classList.remove('active'), 900);
+  } else {
+    setTimeout(() => chip.classList.remove('active'), 900);
+  }
+}
+
+function autoToolsDemo() {
+  // Tone
+  setTimeout(() => triggerTool('tone'), 0);
+  setTimeout(() => triggerTool('expand'), 1400);
+  setTimeout(() => triggerTool('shorten'), 2800);
+  setTimeout(() => {
+    document.querySelectorAll('.ai-chip').forEach(c => c.classList.remove('active'));
+  }, 3800);
+  // Publish
+  setTimeout(() => doPublish(), 4400);
+}
+
+function doPublish() {
+  const btn = document.getElementById('btnPublish');
+  btn.classList.add('loading');
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="animation:spin .8s linear infinite"><circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,.3)" stroke-width="3"/><path d="M12 3a9 9 0 0 1 9 9" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg> Публикуем...';
+
+  setTimeout(() => {
+    showScreen('screenSuccess');
+    updateDots(3);
+    setNavActive(null);
+    launchConfetti();
+
+    setTimeout(() => {
+      ['ss1','ss2','ss3'].forEach((id, i) => {
+        setTimeout(() => document.getElementById(id).classList.add('in'), i * 100);
+      });
+      animateCount('viewCount', 0, 847, 2000);
+    }, 800);
+
+    // Reset btn for next run
+    btn.classList.remove('loading');
+    btn.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Опубликовать';
+  }, 1400);
+}
+
+function animateCount(id, from, to, dur) {
+  const el = document.getElementById(id);
+  const start = performance.now();
+  const tick = (now) => {
+    const p = Math.min((now - start) / dur, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (to - from) * ease);
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+function launchConfetti() {
+  const colors = ['#3b82f6','#2563eb','#22c55e','#f59e0b','#ec4899','#8b5cf6','#06b6d4'];
+  const wrap = document.getElementById('confetti');
+  wrap.innerHTML = '';
+  for (let i = 0; i < 70; i++) {
+    const p = document.createElement('div');
+    p.className = 'cf';
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      width:${4+Math.random()*8}px; height:${4+Math.random()*8}px;
+      border-radius:${Math.random()>.5?'50%':'2px'};
+      animation-duration:${1.5+Math.random()*2.5}s;
+      animation-delay:${Math.random()*.8}s;
+      opacity:${.7+Math.random()*.3};
+    `;
+    wrap.appendChild(p);
+  }
+  setTimeout(() => wrap.innerHTML = '', 5000);
+}
+</script>
+</body>
+</html>

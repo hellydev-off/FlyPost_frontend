@@ -9,6 +9,7 @@ import ChannelVoiceModal from '@/components/channels/ChannelVoiceModal.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
+import AppConfirm from '@/components/common/AppConfirm.vue'
 import { useLocaleStore } from '@/stores/useLocaleStore'
 
 const channelsStore = useChannelsStore()
@@ -17,6 +18,7 @@ const router = useRouter()
 const { t } = useLocaleStore()
 const showAddModal = ref(false)
 const voiceChannelId = ref<string | null>(null)
+const deleteChannelId = ref<string | null>(null)
 
 const voiceChannel = () => channelsStore.channels.find(c => c.id === voiceChannelId.value) ?? null
 
@@ -27,6 +29,13 @@ onMounted(() => {
 function onAdd(payload: { telegramChannelId: string; title: string }): void {
   channelsStore.addChannel(payload)
   showAddModal.value = false
+}
+
+function onDeleteConfirm(): void {
+  if (deleteChannelId.value) {
+    channelsStore.deleteChannel(deleteChannelId.value)
+    deleteChannelId.value = null
+  }
 }
 </script>
 
@@ -51,7 +60,7 @@ function onAdd(payload: { telegramChannelId: string; title: string }): void {
         v-for="channel in channelsStore.channels"
         :key="channel.id"
         :channel="channel"
-        @delete="channelsStore.deleteChannel"
+        @delete="(id) => (deleteChannelId = id)"
         @select="channelsStore.selectChannel"
         @profile="(id) => { planStore.hasFeature('voiceProfile') ? (voiceChannelId = id) : router.push({ name: 'pricing' }) }"
       />
@@ -77,6 +86,16 @@ function onAdd(payload: { telegramChannelId: string; title: string }): void {
       :channel-id="voiceChannelId"
       :channel-title="voiceChannel()!.title"
       @close="voiceChannelId = null"
+    />
+
+    <AppConfirm
+      v-if="deleteChannelId"
+      :message="t('channelCard.deleteConfirm')"
+      :confirm-label="t('common.delete')"
+      :cancel-label="t('common.cancel')"
+      danger
+      @confirm="onDeleteConfirm"
+      @cancel="deleteChannelId = null"
     />
   </div>
 </template>

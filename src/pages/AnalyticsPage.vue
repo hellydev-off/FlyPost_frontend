@@ -2,6 +2,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { useChannelsStore } from '@/stores/useChannelsStore'
 import { usePlanStore } from '@/stores/usePlanStore'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import { analyticsApi } from '@/api/analytics.api'
 import type { ChannelStats, SubscriberHistory, SubscriberPoint } from '@/types/analytics.types'
 import StatsCard from '@/components/analytics/StatsCard.vue'
@@ -20,6 +21,7 @@ import type { ShareReportData } from '@/composables/useShareReport'
 const router = useRouter()
 const channelsStore = useChannelsStore()
 const planStore = usePlanStore()
+const { t } = useLocaleStore()
 const stats = ref<ChannelStats | null>(null)
 const subHistory = ref<SubscriberHistory | null>(null)
 const healthScore = ref<HealthScoreData | null>(null)
@@ -129,13 +131,13 @@ const dateLabels = computed(() => {
 
 <template>
   <div class="analytics-page">
-    <h1>Аналитика</h1>
+    <h1>{{ t('analytics.title') }}</h1>
 
     <div class="analytics-page__channel mt">
       <div class="analytics-page__select-wrap">
         <AppIcon name="chart" :size="18" color="var(--fp-primary)" />
         <select v-model="selectedId" class="analytics-page__select">
-          <option value="" disabled>Выберите канал</option>
+          <option value="" disabled>{{ t('analytics.selectChannel') }}</option>
           <option
             v-for="ch in channelsStore.channels"
             :key="ch.id"
@@ -152,10 +154,10 @@ const dateLabels = computed(() => {
 
     <template v-else-if="stats">
       <div class="analytics-page__stats mt stagger">
-        <StatsCard label="Всего" :value="stats.total" />
-        <StatsCard label="Опубликовано" :value="stats.published" color="var(--fp-success)" />
-        <StatsCard label="Запланировано" :value="stats.scheduled" color="var(--fp-primary)" />
-        <StatsCard label="Черновики" :value="stats.drafts" />
+        <StatsCard :label="t('analytics.total')" :value="stats.total" />
+        <StatsCard :label="t('analytics.published')" :value="stats.published" color="var(--fp-success)" />
+        <StatsCard :label="t('analytics.scheduled')" :value="stats.scheduled" color="var(--fp-primary)" />
+        <StatsCard :label="t('analytics.drafts')" :value="stats.drafts" />
       </div>
 
       <div class="mt">
@@ -176,13 +178,13 @@ const dateLabels = computed(() => {
           @click="showShareReport = true"
         >
           <AppIcon name="share" :size="18" color="var(--fp-primary)" />
-          <span>Поделиться отчётом</span>
+          <span>{{ t('analytics.shareReport') }}</span>
         </button>
       </template>
       <FeatureLock
         v-else
-        title="Полная аналитика"
-        description="Health Score, лучшее время для постов, история подписчиков и экспорт отчётов. Доступно на тарифах Про и Максимум."
+        :title="t('analytics.fullAnalyticsTitle')"
+        :description="t('analytics.fullAnalyticsDesc')"
         class="mt"
       />
 
@@ -191,7 +193,7 @@ const dateLabels = computed(() => {
         @click="planStore.hasFeature('competitors') ? router.push({ name: 'competitors' }) : router.push({ name: 'pricing' })"
       >
         <AppIcon name="chart" :size="18" color="var(--fp-primary)" />
-        <span>Анализ конкурентов</span>
+        <span>{{ t('analytics.competitors') }}</span>
         <AppIcon
           v-if="!planStore.hasFeature('competitors')"
           name="lock"
@@ -206,7 +208,7 @@ const dateLabels = computed(() => {
         <div class="sub-card__header">
           <div class="sub-card__title-row">
             <AppIcon name="user" :size="18" color="var(--fp-primary)" />
-            <span class="sub-card__title">Подписчики</span>
+            <span class="sub-card__title">{{ t('analytics.subscribers') }}</span>
           </div>
           <span class="sub-card__current">{{ formatCount(subHistory.current) }}</span>
         </div>
@@ -217,14 +219,14 @@ const dateLabels = computed(() => {
               class="sub-card__growth-value"
               :class="subHistory.growth7d !== null && subHistory.growth7d >= 0 ? 'sub-card__growth-value--pos' : 'sub-card__growth-value--neg'"
             >{{ formatGrowth(subHistory.growth7d) }}</span>
-            <span class="sub-card__growth-label">за 7 дней</span>
+            <span class="sub-card__growth-label">{{ t('analytics.days7') }}</span>
           </div>
           <div class="sub-card__growth-item">
             <span
               class="sub-card__growth-value"
               :class="subHistory.growth30d !== null && subHistory.growth30d >= 0 ? 'sub-card__growth-value--pos' : 'sub-card__growth-value--neg'"
             >{{ formatGrowth(subHistory.growth30d) }}</span>
-            <span class="sub-card__growth-label">за 30 дней</span>
+            <span class="sub-card__growth-label">{{ t('analytics.days30') }}</span>
           </div>
         </div>
 
@@ -250,12 +252,12 @@ const dateLabels = computed(() => {
 
         <div v-else class="sub-card__empty">
           <AppIcon name="clock" :size="20" color="var(--fp-text-tertiary)" />
-          <span>Данные собираются каждый час. Зайдите позже.</span>
+          <span>{{ t('analytics.dataCollecting') }}</span>
         </div>
       </div>
 
       <div v-if="stats.lastPosts.length" class="mt">
-        <h2 class="analytics-page__subtitle">Последние посты</h2>
+        <h2 class="analytics-page__subtitle">{{ t('analytics.recentPosts') }}</h2>
         <div class="analytics-page__posts stagger">
           <PostCard
             v-for="post in stats.lastPosts"

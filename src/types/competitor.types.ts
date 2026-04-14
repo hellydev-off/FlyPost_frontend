@@ -16,6 +16,7 @@ export interface WeeklyPlanIdea {
   title: string
   summary: string
   suggestedHour: number
+  dayIndex: number  // 0=Пн … 6=Вс
 }
 
 export interface DailyPlanIdea {

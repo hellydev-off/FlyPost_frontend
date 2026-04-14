@@ -4,6 +4,7 @@ import AppModal from '@/components/common/AppModal.vue'
 import TemplateVarsModal from '@/components/templates/TemplateVarsModal.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { useTemplatesStore } from '@/stores/useTemplatesStore'
+import { useLocaleStore } from '@/stores/useLocaleStore'
 import type { Template, TemplateCategory } from '@/types/template.types'
 
 const emit = defineEmits<{
@@ -12,17 +13,13 @@ const emit = defineEmits<{
 }>()
 
 const store = useTemplatesStore()
+const { t } = useLocaleStore()
 const selectedTemplate = ref<Template | null>(null)
 const varsLoading = ref(false)
 const searchQuery = ref('')
 
-const CATEGORY_LABELS: Record<TemplateCategory, string> = {
-  announcement: 'Анонс',
-  promo: 'Промо',
-  educational: 'Обучение',
-  engagement: 'Вовлечение',
-  news: 'Новости',
-  personal: 'Личное',
+function categoryLabel(cat: TemplateCategory): string {
+  return t(`templates.categories.${cat}`)
 }
 
 const filtered = computed(() => {
@@ -55,12 +52,12 @@ async function applyVars(vars: Record<string, string>): Promise<void> {
 </script>
 
 <template>
-  <AppModal title="Выбрать шаблон" @close="emit('close')">
+  <AppModal :title="t('templates.pickerTitle')" @close="emit('close')">
     <div class="picker">
       <input
         v-model="searchQuery"
         class="picker__search"
-        placeholder="Поиск шаблона..."
+        :placeholder="t('templates.searchPlaceholder')"
       />
 
       <div v-if="store.loading" class="picker__loading">
@@ -68,7 +65,7 @@ async function applyVars(vars: Record<string, string>): Promise<void> {
       </div>
 
       <div v-else-if="filtered.length === 0" class="picker__empty">
-        Шаблонов не найдено
+        {{ t('templates.noResults') }}
       </div>
 
       <div v-else class="picker__list">
@@ -80,7 +77,7 @@ async function applyVars(vars: Record<string, string>): Promise<void> {
         >
           <div class="picker__item-top">
             <span class="picker__badge" :class="`picker__badge--${template.category}`">
-              {{ CATEGORY_LABELS[template.category] }}
+              {{ categoryLabel(template.category) }}
             </span>
             <span class="picker__usage">
               <AppIcon name="check-circle" :size="12" />
