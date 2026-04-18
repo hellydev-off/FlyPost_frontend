@@ -280,6 +280,7 @@ async function createDraftFromIdea(plan: AiPlan, idea: DailyPlanIdea | WeeklyPla
 }
 
 .history-page__header h1 {
+  flex: 1;
   font-size: 24px;
   font-weight: 700;
   color: var(--fp-text);

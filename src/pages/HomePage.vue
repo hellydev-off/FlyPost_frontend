@@ -173,15 +173,24 @@ function goToPost(id: string): void {
   margin-bottom: var(--fp-spacing-lg);
 }
 
-.home__header-left,
-.home__header-right {
+.home__header-left {
   flex: 1;
+  min-width: 0;
 }
 
 .home__header-center {
   display: flex;
   justify-content: center;
+  flex-shrink: 0;
+  padding: 0 8px;
+}
+
+.home__header-right {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .home__label {
@@ -194,13 +203,9 @@ function goToPost(id: string): void {
   font-size: 26px;
   font-weight: 800;
   color: var(--fp-text);
-}
-
-.home__header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .home__avatar {

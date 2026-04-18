@@ -15,7 +15,6 @@ function channelInitials(title: string): string {
   return title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
-// Детерминированный цвет по названию канала
 const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#06b6d4']
 function channelColor(title: string): string {
   let hash = 0
@@ -44,36 +43,60 @@ function channelColor(title: string): string {
     <AppIcon name="chevron-down" :size="13" color="var(--fp-text-tertiary)" class="ch-sw__arrow" />
   </button>
 
-  <!-- Боттомшит -->
+  <!-- Модалка -->
   <Teleport to="body">
-    <Transition name="sheet">
-      <div v-if="open" class="ch-sw-sheet" @click.self="open = false">
-        <div class="ch-sw-sheet__body">
-          <div class="ch-sw-sheet__handle" />
-          <p class="ch-sw-sheet__title">Рабочий канал</p>
-
-          <div class="ch-sw-sheet__grid">
-            <button
-              v-for="ch in channelsStore.channels"
-              :key="ch.id"
-              class="ch-sw-card"
-              :class="{ 'ch-sw-card--active': ch.id === channelsStore.selectedChannelId }"
-              @click="select(ch.id)"
-            >
-              <div
-                class="ch-sw-card__avatar"
-                :style="{ background: channelColor(ch.title) }"
-              >
-                {{ channelInitials(ch.title) }}
-                <span v-if="ch.id === channelsStore.selectedChannelId" class="ch-sw-card__badge">
-                  <AppIcon name="check" :size="10" color="#fff" />
-                </span>
+    <Transition name="modal-fade">
+      <div v-if="open" class="ch-modal-overlay" @click.self="open = false">
+        <Transition name="modal-scale">
+          <div v-if="open" class="ch-modal">
+            <!-- Header -->
+            <div class="ch-modal__header">
+              <!-- SVG icon -->
+              <div class="ch-modal__icon">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <circle cx="16" cy="16" r="16" fill="var(--fp-primary-bg)" />
+                  <path d="M10 20 Q16 10 22 20" stroke="var(--fp-primary)" stroke-width="2" stroke-linecap="round" fill="none"/>
+                  <circle cx="10" cy="20" r="2.5" fill="var(--fp-primary)" />
+                  <circle cx="22" cy="20" r="2.5" fill="var(--fp-primary)" />
+                  <circle cx="16" cy="13" r="2.5" fill="var(--fp-primary)" />
+                </svg>
               </div>
-              <span class="ch-sw-card__name">{{ ch.title }}</span>
-              <span v-if="ch.username" class="ch-sw-card__username">@{{ ch.username }}</span>
-            </button>
+              <h3 class="ch-modal__title">Рабочий канал</h3>
+              <button class="ch-modal__close" @click="open = false">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path d="M6 18L18 6M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- List -->
+            <div class="ch-modal__list">
+              <button
+                v-for="ch in channelsStore.channels"
+                :key="ch.id"
+                class="ch-modal__item"
+                :class="{ 'ch-modal__item--active': ch.id === channelsStore.selectedChannelId }"
+                @click="select(ch.id)"
+              >
+                <span
+                  class="ch-modal__item-avatar"
+                  :style="{ background: channelColor(ch.title) }"
+                >
+                  {{ channelInitials(ch.title) }}
+                </span>
+                <div class="ch-modal__item-info">
+                  <span class="ch-modal__item-name">{{ ch.title }}</span>
+                  <span v-if="ch.username" class="ch-modal__item-username">@{{ ch.username }}</span>
+                </div>
+                <div v-if="ch.id === channelsStore.selectedChannelId" class="ch-modal__item-check">
+                  <svg width="14" height="14" viewBox="0 0 24 24">
+                    <path d="M5 13l4 4L19 7" fill="none" stroke="var(--fp-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </button>
+            </div>
           </div>
-        </div>
+        </Transition>
       </div>
     </Transition>
   </Teleport>
@@ -89,7 +112,7 @@ function channelColor(title: string): string {
   background: var(--fp-bg-secondary);
   border-radius: 20px;
   transition: background var(--fp-transition);
-  max-width: 190px;
+  max-width: 180px;
 }
 
 .ch-sw:active { background: var(--fp-bg-tertiary); }
@@ -115,7 +138,7 @@ function channelColor(title: string): string {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 110px;
+  max-width: 100px;
 }
 
 .ch-sw__arrow {
@@ -125,122 +148,139 @@ function channelColor(title: string): string {
 
 .ch-sw--open .ch-sw__arrow { transform: rotate(180deg); }
 
-/* ── Sheet ───────────────────────────────────── */
-.ch-sw-sheet {
+/* ── Overlay ─────────────────────────────────── */
+.ch-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 1000;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
 }
 
-.ch-sw-sheet__body {
-  width: 100%;
+/* ── Modal ───────────────────────────────────── */
+.ch-modal {
   background: var(--fp-bg);
-  border-radius: 24px 24px 0 0;
-  padding-bottom: calc(max(env(safe-area-inset-bottom), 16px) + 12px);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 320px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
 
-.ch-sw-sheet__handle {
-  width: 36px;
-  height: 4px;
-  background: var(--fp-border);
-  border-radius: 2px;
-  margin: 12px auto 0;
+/* ── Modal header ────────────────────────────── */
+.ch-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--fp-border);
 }
 
-.ch-sw-sheet__title {
+.ch-modal__icon {
+  flex-shrink: 0;
+  display: flex;
+}
+
+.ch-modal__title {
+  flex: 1;
   font-size: 16px;
   font-weight: 700;
   color: var(--fp-text);
-  text-align: center;
-  padding: 16px 16px 12px;
 }
 
-/* ── Grid ────────────────────────────────────── */
-.ch-sw-sheet__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 10px;
-  padding: 0 16px 4px;
+.ch-modal__close {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--fp-bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fp-text-secondary);
+  flex-shrink: 0;
+  transition: background var(--fp-transition);
 }
 
-/* ── Card ────────────────────────────────────── */
-.ch-sw-card {
+.ch-modal__close:active { background: var(--fp-bg-tertiary); }
+
+/* ── List ────────────────────────────────────── */
+.ch-modal__list {
   display: flex;
   flex-direction: column;
+  padding: 8px 0 8px;
+}
+
+.ch-modal__item {
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 16px 12px 14px;
-  background: var(--fp-bg-secondary);
-  border-radius: 16px;
-  border: 2px solid transparent;
-  transition: all var(--fp-transition);
-  position: relative;
+  gap: 12px;
+  padding: 11px 16px;
+  transition: background var(--fp-transition);
+  text-align: left;
 }
 
-.ch-sw-card:active { transform: scale(0.96); }
+.ch-modal__item:active { background: var(--fp-bg-secondary); }
 
-.ch-sw-card--active {
-  border-color: var(--fp-primary);
-  background: var(--fp-primary-bg);
-}
+.ch-modal__item--active { background: var(--fp-primary-bg); }
 
-.ch-sw-card__avatar {
-  width: 52px;
-  height: 52px;
+.ch-modal__item-avatar {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 13px;
   font-weight: 700;
   color: #fff;
-  position: relative;
   flex-shrink: 0;
 }
 
-.ch-sw-card__badge {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 18px;
-  height: 18px;
-  background: var(--fp-primary);
+.ch-modal__item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ch-modal__item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fp-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ch-modal__item-username {
+  font-size: 12px;
+  color: var(--fp-text-tertiary);
+}
+
+.ch-modal__item-check {
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  border: 2px solid var(--fp-bg);
+  background: var(--fp-primary-bg);
+  border: 1.5px solid var(--fp-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.ch-sw-card__name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--fp-text);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-}
-
-.ch-sw-card__username {
-  font-size: 11px;
-  color: var(--fp-text-tertiary);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
+  flex-shrink: 0;
 }
 
 /* ── Transitions ─────────────────────────────── */
-.sheet-enter-active, .sheet-leave-active { transition: opacity 0.25s ease; }
-.sheet-enter-active .ch-sw-sheet__body,
-.sheet-leave-active .ch-sw-sheet__body  { transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
-.sheet-enter-from, .sheet-leave-to      { opacity: 0; }
-.sheet-enter-from .ch-sw-sheet__body,
-.sheet-leave-to   .ch-sw-sheet__body    { transform: translateY(100%); }
+.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
+.modal-fade-enter-from,   .modal-fade-leave-to     { opacity: 0; }
+
+.modal-scale-enter-active { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease; }
+.modal-scale-leave-active { transition: transform 0.18s ease, opacity 0.18s ease; }
+.modal-scale-enter-from   { transform: scale(0.88); opacity: 0; }
+.modal-scale-leave-to     { transform: scale(0.92); opacity: 0; }
 </style>
