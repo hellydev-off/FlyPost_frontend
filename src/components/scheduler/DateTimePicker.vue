@@ -85,13 +85,20 @@ function pad(n: number): string {
   return String(n).padStart(2, '0')
 }
 
-function onConfirm(): void {
-  if (!selectedDate.value) return
+const selectedDateTime = computed<Date | null>(() => {
+  if (!selectedDate.value) return null
   const iso = `${selectedDate.value}T${pad(selectedHour.value)}:${pad(selectedMinute.value)}:00`
-  emit('confirm', new Date(iso).toISOString())
+  return new Date(iso)
+})
+
+function onConfirm(): void {
+  if (!selectedDateTime.value) return
+  emit('confirm', selectedDateTime.value.toISOString())
 }
 
-const canConfirm = computed(() => !!selectedDate.value)
+const canConfirm = computed(() =>
+  !!selectedDateTime.value && selectedDateTime.value > new Date(),
+)
 </script>
 
 <template>
@@ -151,8 +158,9 @@ const canConfirm = computed(() => !!selectedDate.value)
       </div>
 
       <!-- Selected summary -->
-      <div v-if="selectedDate" class="dtp__summary">
+      <div v-if="selectedDate" class="dtp__summary" :class="{ 'dtp__summary--error': selectedDateTime && selectedDateTime <= new Date() }">
         {{ selectedDate.split('-').reverse().join('.') }} в {{ pad(selectedHour) }}:{{ pad(selectedMinute) }}
+        <span v-if="selectedDateTime && selectedDateTime <= new Date()" class="dtp__summary-warn"> — время в прошлом</span>
       </div>
 
       <AppButton block :disabled="!canConfirm" @click="onConfirm">
@@ -314,5 +322,15 @@ const canConfirm = computed(() => !!selectedDate.value)
   padding: 10px;
   background: var(--fp-primary-bg);
   border-radius: var(--fp-radius-sm);
+}
+
+.dtp__summary--error {
+  color: var(--fp-error, #ef4444);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.dtp__summary-warn {
+  font-size: 12px;
+  font-weight: 500;
 }
 </style>

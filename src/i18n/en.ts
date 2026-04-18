@@ -272,6 +272,7 @@ export default {
     downgradeFree: 'Switch to Free',
     activatedSuccess: 'activated!',
     activateError: 'Error activating plan',
+    paymentPending: 'Payment received! Subscription activated.',
     downgradeSuccess: 'Switched to Free plan',
     downgradeError: 'Error switching plan',
     billingMonths: 'mo.',

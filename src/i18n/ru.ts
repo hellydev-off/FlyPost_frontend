@@ -272,6 +272,7 @@ export default {
     downgradeFree: 'Перейти на Free',
     activatedSuccess: 'активирован!',
     activateError: 'Ошибка при активации тарифа',
+    paymentPending: 'Оплата получена! Подписка активирована.',
     downgradeSuccess: 'Переключено на Free тариф',
     downgradeError: 'Ошибка при смене тарифа',
     billingMonths: 'мес.',

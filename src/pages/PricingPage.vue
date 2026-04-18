@@ -1,19 +1,36 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { usePlanStore } from '@/stores/usePlanStore'
 import { subscriptionApi } from '@/api/subscription.api'
 import { useToastStore } from '@/stores/useToastStore'
 import { useLocaleStore } from '@/stores/useLocaleStore'
+import { isMockMode } from '@/api/mock'
 import {
   PLAN_META, PLAN_LIMITS, PLAN_PRICES,
   type PlanKey, type PeriodMonths,
 } from '@/types/plan.types'
 
 const router = useRouter()
+const route = useRoute()
 const planStore = usePlanStore()
 const toast = useToastStore()
 const { t } = useLocaleStore()
+
+onMounted(async () => {
+  if (route.query.payment === 'success') {
+    // Пользователь вернулся после оплаты — обновляем статус подписки
+    try {
+      const status = await subscriptionApi.getStatus()
+      planStore.status = status
+      toast.show(t('pricing.paymentPending'), 'success')
+    } catch {
+      // ignore
+    }
+    // Убираем query-параметр из URL без перезагрузки
+    router.replace({ name: 'pricing' })
+  }
+})
 
 const selectedPeriod = ref<PeriodMonths>(1)
 const loadingPlan = ref<PlanKey | null>(null)
@@ -82,13 +99,20 @@ function getSaving(plan: Exclude<PlanKey, 'free'>, period: PeriodMonths): number
 async function subscribe(plan: Exclude<PlanKey, 'free'>): Promise<void> {
   loadingPlan.value = plan
   try {
-    const status = await subscriptionApi.confirmPayment(plan, selectedPeriod.value)
-    planStore.status = status
-    toast.show(`${t('pricing.plan')} «${t(`planMeta.${plan}.name`)}» ${t('pricing.activatedSuccess')}`, 'success')
-    router.back()
+    if (isMockMode) {
+      // В mock-режиме мгновенная активация без оплаты
+      const status = await subscriptionApi.confirmPayment(plan, selectedPeriod.value)
+      planStore.status = status
+      toast.show(`${t('pricing.plan')} «${t(`planMeta.${plan}.name`)}» ${t('pricing.activatedSuccess')}`, 'success')
+      router.back()
+      return
+    }
+
+    const result = await subscriptionApi.initPayment(plan, selectedPeriod.value)
+    // Редиректим на страницу оплаты ЮKassa
+    window.location.href = result.paymentUrl
   } catch {
     toast.show(t('pricing.activateError'), 'error')
-  } finally {
     loadingPlan.value = null
   }
 }
@@ -128,8 +152,8 @@ async function downgradeFree(): Promise<void> {
       </div>
     </div>
 
-    <!-- Test mode banner -->
-    <div class="pricing__test-banner">
+    <!-- Test mode banner (только в mock-режиме) -->
+    <div v-if="isMockMode" class="pricing__test-banner">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 3H15M10 3V9L7.5 14M14 9V3M14 9L16.5 14M7.5 14H16.5M7.5 14L6 18H18L16.5 14"/>
       </svg>

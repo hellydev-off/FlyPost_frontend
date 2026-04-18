@@ -89,7 +89,7 @@ const improveActions = computed((): Array<{ action: ImproveAction; icon: string;
   { action: 'tone', icon: 'mask', label: t('editor.improve.tone') },
 ])
 
-const tonePresets = computed(() => messages.value.editor.tonePresets)
+const tonePresets = computed(() => messages.value?.editor?.tonePresets ?? [])
 
 async function runImprove(action: ImproveAction, tone?: string): Promise<void> {
   if (!hasContent.value) {
@@ -172,7 +172,7 @@ function onImproveClick(action: ImproveAction): void {
         :key="item.action"
         class="ai-toolbar__btn"
         :class="{ 'ai-toolbar__btn--loading': improveLoading === item.action }"
-        :disabled="(!hasContent && planStore.canUseAi()) || improveLoading !== null"
+        :disabled="!hasContent || improveLoading !== null"
         :title="item.label"
         @click="planStore.canUseAi() ? onImproveClick(item.action) : planStore.showPaywall('LIMIT_AI')"
       >

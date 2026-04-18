@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { useLocaleStore } from '@/stores/useLocaleStore'
+import { useToastStore } from '@/stores/useToastStore'
 
 const props = defineProps<{
   postId?: string        // если уже создан — сразу загружаем
@@ -14,6 +15,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useLocaleStore()
+const toast = useToastStore()
 const files = ref<File[]>([])
 const previews = ref<{ url: string; name: string; type: string; size: string }[]>([])
 const dragOver = ref(false)
@@ -45,12 +47,26 @@ function fileLabel(type: string): string {
 function addFiles(incoming: FileList | null): void {
   if (!incoming) return
   const valid: File[] = []
+  let skippedSize = 0
+  let skippedLimit = 0
   for (const f of Array.from(incoming)) {
-    if (files.value.length + valid.length >= MAX_FILES) break
-    if (f.size > MAX_SIZE) continue
+    if (files.value.length + valid.length >= MAX_FILES) {
+      skippedLimit++
+      continue
+    }
+    if (f.size > MAX_SIZE) {
+      skippedSize++
+      continue
+    }
     valid.push(f)
     const url = f.type.startsWith('image/') ? URL.createObjectURL(f) : ''
     previews.value.push({ url, name: f.name, type: f.type, size: formatSize(f.size) })
+  }
+  if (skippedSize > 0) {
+    toast.show(`Файл${skippedSize > 1 ? 'ы' : ''} превышают лимит 50 МБ и не добавлен${skippedSize > 1 ? 'ы' : ''}`, 'error')
+  }
+  if (skippedLimit > 0) {
+    toast.show(`Максимум ${MAX_FILES} файлов`, 'error')
   }
   files.value.push(...valid)
   emit('change', files.value)

@@ -64,8 +64,12 @@ async function analyze(id: string): Promise<void> {
 }
 
 async function remove(id: string): Promise<void> {
-  await competitorApi.delete(id)
-  competitors.value = competitors.value.filter(c => c.id !== id)
+  try {
+    await competitorApi.delete(id)
+    competitors.value = competitors.value.filter(c => c.id !== id)
+  } catch {
+    toast.show('Не удалось удалить конкурента', 'error')
+  }
 }
 
 function parseAnalysis(raw: string | null): CompetitorAnalysis | null {
