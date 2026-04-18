@@ -81,14 +81,16 @@ function select(id: string): void {
 <style scoped>
 /* ── Trigger ─────────────────────────────────── */
 .ch-sw {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 7px;
   padding: 5px 10px 5px 5px;
   background: var(--fp-bg-secondary);
   border-radius: 20px;
   transition: background var(--fp-transition);
-  max-width: 180px;
+  flex-shrink: 0;
+  min-width: 0;
+  max-width: 160px;
 }
 
 .ch-sw:active { background: var(--fp-bg-tertiary); }

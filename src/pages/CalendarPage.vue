@@ -332,13 +332,18 @@ function goToPost(id: string): void {
 .calendar-page__header-top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
 }
 
 .calendar-page__header h1 {
   font-size: 24px;
   font-weight: 700;
   color: var(--fp-text);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .calendar-page__plan-btns {

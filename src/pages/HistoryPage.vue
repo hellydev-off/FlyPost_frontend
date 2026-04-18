@@ -306,9 +306,13 @@ async function createDraftFromIdea(plan: AiPlan, idea: DailyPlanIdea | WeeklyPla
 
 .history-page__header h1 {
   flex: 1;
+  min-width: 0;
   font-size: 24px;
   font-weight: 700;
   color: var(--fp-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Tabs */
