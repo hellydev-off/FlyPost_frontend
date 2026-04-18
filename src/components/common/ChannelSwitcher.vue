@@ -10,17 +10,6 @@ function select(id: string): void {
   channelsStore.selectChannel(id)
   open.value = false
 }
-
-function channelInitials(title: string): string {
-  return title.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-}
-
-const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#06b6d4']
-function channelColor(title: string): string {
-  let hash = 0
-  for (let i = 0; i < title.length; i++) hash = (hash * 31 + title.charCodeAt(i)) & 0xffffffff
-  return COLORS[Math.abs(hash) % COLORS.length]
-}
 </script>
 
 <template>
@@ -31,11 +20,8 @@ function channelColor(title: string): string {
     :class="{ 'ch-sw--open': open }"
     @click="open = true"
   >
-    <span
-      class="ch-sw__avatar"
-      :style="{ background: channelColor(channelsStore.selectedChannel?.title ?? '') }"
-    >
-      {{ channelInitials(channelsStore.selectedChannel?.title ?? '?') }}
+    <span class="ch-sw__icon">
+      <AppIcon name="channels" :size="14" color="var(--fp-primary)" />
     </span>
     <span class="ch-sw__name">
       {{ channelsStore.selectedChannel?.title ?? 'Канал' }}
@@ -43,26 +29,19 @@ function channelColor(title: string): string {
     <AppIcon name="chevron-down" :size="13" color="var(--fp-text-tertiary)" class="ch-sw__arrow" />
   </button>
 
-  <!-- Модалка -->
+  <!-- Модалка (bottom sheet) -->
   <Teleport to="body">
-    <Transition name="modal-fade">
-      <div v-if="open" class="ch-modal-overlay" @click.self="open = false">
-        <Transition name="modal-scale">
-          <div v-if="open" class="ch-modal">
+    <Transition name="sheet-overlay">
+      <div v-if="open" class="ch-overlay" @click.self="open = false">
+        <Transition name="sheet-slide">
+          <div v-if="open" class="ch-sheet">
+            <!-- Handle -->
+            <div class="ch-sheet__handle" />
+
             <!-- Header -->
-            <div class="ch-modal__header">
-              <!-- SVG icon -->
-              <div class="ch-modal__icon">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                  <circle cx="16" cy="16" r="16" fill="var(--fp-primary-bg)" />
-                  <path d="M10 20 Q16 10 22 20" stroke="var(--fp-primary)" stroke-width="2" stroke-linecap="round" fill="none"/>
-                  <circle cx="10" cy="20" r="2.5" fill="var(--fp-primary)" />
-                  <circle cx="22" cy="20" r="2.5" fill="var(--fp-primary)" />
-                  <circle cx="16" cy="13" r="2.5" fill="var(--fp-primary)" />
-                </svg>
-              </div>
-              <h3 class="ch-modal__title">Рабочий канал</h3>
-              <button class="ch-modal__close" @click="open = false">
+            <div class="ch-sheet__header">
+              <h3 class="ch-sheet__title">Рабочий канал</h3>
+              <button class="ch-sheet__close" @click="open = false">
                 <svg width="18" height="18" viewBox="0 0 24 24">
                   <path d="M6 18L18 6M6 6l12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
                 </svg>
@@ -70,25 +49,22 @@ function channelColor(title: string): string {
             </div>
 
             <!-- List -->
-            <div class="ch-modal__list">
+            <div class="ch-sheet__list">
               <button
                 v-for="ch in channelsStore.channels"
                 :key="ch.id"
-                class="ch-modal__item"
-                :class="{ 'ch-modal__item--active': ch.id === channelsStore.selectedChannelId }"
+                class="ch-sheet__item"
+                :class="{ 'ch-sheet__item--active': ch.id === channelsStore.selectedChannelId }"
                 @click="select(ch.id)"
               >
-                <span
-                  class="ch-modal__item-avatar"
-                  :style="{ background: channelColor(ch.title) }"
-                >
-                  {{ channelInitials(ch.title) }}
+                <span class="ch-sheet__item-icon">
+                  <AppIcon name="channels" :size="18" color="var(--fp-primary)" />
                 </span>
-                <div class="ch-modal__item-info">
-                  <span class="ch-modal__item-name">{{ ch.title }}</span>
-                  <span v-if="ch.username" class="ch-modal__item-username">@{{ ch.username }}</span>
+                <div class="ch-sheet__item-info">
+                  <span class="ch-sheet__item-name">{{ ch.title }}</span>
+                  <span v-if="ch.username" class="ch-sheet__item-username">@{{ ch.username }}</span>
                 </div>
-                <div v-if="ch.id === channelsStore.selectedChannelId" class="ch-modal__item-check">
+                <div v-if="ch.id === channelsStore.selectedChannelId" class="ch-sheet__item-check">
                   <svg width="14" height="14" viewBox="0 0 24 24">
                     <path d="M5 13l4 4L19 7" fill="none" stroke="var(--fp-primary)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
@@ -117,18 +93,15 @@ function channelColor(title: string): string {
 
 .ch-sw:active { background: var(--fp-bg-tertiary); }
 
-.ch-sw__avatar {
+.ch-sw__icon {
   width: 26px;
   height: 26px;
   border-radius: 50%;
+  background: var(--fp-primary-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
   flex-shrink: 0;
-  letter-spacing: 0.3px;
 }
 
 .ch-sw__name {
@@ -149,53 +122,54 @@ function channelColor(title: string): string {
 .ch-sw--open .ch-sw__arrow { transform: rotate(180deg); }
 
 /* ── Overlay ─────────────────────────────────── */
-.ch-modal-overlay {
+.ch-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   z-index: 1000;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  padding: 24px;
 }
 
-/* ── Modal ───────────────────────────────────── */
-.ch-modal {
+/* ── Sheet ───────────────────────────────────── */
+.ch-sheet {
   background: var(--fp-bg);
-  border-radius: 20px;
+  border-radius: 20px 20px 0 0;
   width: 100%;
-  max-width: 320px;
+  max-width: 480px;
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  padding-bottom: env(safe-area-inset-bottom, 8px);
 }
 
-/* ── Modal header ────────────────────────────── */
-.ch-modal__header {
+/* ── Handle ──────────────────────────────────── */
+.ch-sheet__handle {
+  width: 36px;
+  height: 4px;
+  background: var(--fp-border);
+  border-radius: 2px;
+  margin: 10px auto 0;
+}
+
+/* ── Header ──────────────────────────────────── */
+.ch-sheet__header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 16px 12px;
-  border-bottom: 1px solid var(--fp-border);
+  justify-content: space-between;
+  padding: 14px 20px 12px;
 }
 
-.ch-modal__icon {
-  flex-shrink: 0;
-  display: flex;
-}
-
-.ch-modal__title {
-  flex: 1;
-  font-size: 16px;
+.ch-sheet__title {
+  font-size: 18px;
   font-weight: 700;
   color: var(--fp-text);
 }
 
-.ch-modal__close {
-  width: 30px;
-  height: 30px;
+.ch-sheet__close {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--fp-bg-secondary);
   display: flex;
@@ -206,42 +180,39 @@ function channelColor(title: string): string {
   transition: background var(--fp-transition);
 }
 
-.ch-modal__close:active { background: var(--fp-bg-tertiary); }
+.ch-sheet__close:active { background: var(--fp-bg-tertiary); }
 
 /* ── List ────────────────────────────────────── */
-.ch-modal__list {
+.ch-sheet__list {
   display: flex;
   flex-direction: column;
-  padding: 8px 0 8px;
+  padding: 0 0 12px;
 }
 
-.ch-modal__item {
+.ch-sheet__item {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 16px;
+  padding: 11px 20px;
   transition: background var(--fp-transition);
   text-align: left;
 }
 
-.ch-modal__item:active { background: var(--fp-bg-secondary); }
+.ch-sheet__item:active { background: var(--fp-bg-secondary); }
+.ch-sheet__item--active { background: var(--fp-primary-bg); }
 
-.ch-modal__item--active { background: var(--fp-primary-bg); }
-
-.ch-modal__item-avatar {
-  width: 38px;
-  height: 38px;
+.ch-sheet__item-icon {
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
+  background: var(--fp-primary-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
   flex-shrink: 0;
 }
 
-.ch-modal__item-info {
+.ch-sheet__item-info {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -249,8 +220,8 @@ function channelColor(title: string): string {
   gap: 2px;
 }
 
-.ch-modal__item-name {
-  font-size: 14px;
+.ch-sheet__item-name {
+  font-size: 15px;
   font-weight: 600;
   color: var(--fp-text);
   white-space: nowrap;
@@ -258,12 +229,12 @@ function channelColor(title: string): string {
   text-overflow: ellipsis;
 }
 
-.ch-modal__item-username {
+.ch-sheet__item-username {
   font-size: 12px;
   color: var(--fp-text-tertiary);
 }
 
-.ch-modal__item-check {
+.ch-sheet__item-check {
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -276,11 +247,11 @@ function channelColor(title: string): string {
 }
 
 /* ── Transitions ─────────────────────────────── */
-.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.2s ease; }
-.modal-fade-enter-from,   .modal-fade-leave-to     { opacity: 0; }
+.sheet-overlay-enter-active, .sheet-overlay-leave-active { transition: opacity 0.22s ease; }
+.sheet-overlay-enter-from,   .sheet-overlay-leave-to     { opacity: 0; }
 
-.modal-scale-enter-active { transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease; }
-.modal-scale-leave-active { transition: transform 0.18s ease, opacity 0.18s ease; }
-.modal-scale-enter-from   { transform: scale(0.88); opacity: 0; }
-.modal-scale-leave-to     { transform: scale(0.92); opacity: 0; }
+.sheet-slide-enter-active { transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1); }
+.sheet-slide-leave-active { transition: transform 0.22s ease; }
+.sheet-slide-enter-from   { transform: translateY(100%); }
+.sheet-slide-leave-to     { transform: translateY(100%); }
 </style>

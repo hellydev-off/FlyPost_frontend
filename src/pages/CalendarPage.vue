@@ -114,7 +114,7 @@ const calendarDays = computed(() => {
   return days
 })
 
-const selectedDate = ref<string | null>(null)
+const selectedDate = ref<string | null>(formatKey(now.getFullYear(), now.getMonth(), now.getDate()))
 
 const selectedEvents = computed(() => {
   if (!selectedDate.value) return []

@@ -12,6 +12,7 @@ import ChannelSwitcher from '@/components/common/ChannelSwitcher.vue'
 import type { AiPlan, DailyPlanIdea, WeeklyPlanIdea } from '@/types/competitor.types'
 
 type Tab = 'posts' | 'daily' | 'weekly'
+type PostFilter = 'all' | 'draft' | 'published' | 'scheduled'
 
 const router = useRouter()
 const route = useRoute()
@@ -27,6 +28,7 @@ const weeklyPlans = ref<AiPlan[]>([])
 const loadingPlans = ref(false)
 const expandedPlanId = ref<string | null>(null)
 const creatingDraftKey = ref<string | null>(null) // `${planId}-${ideaIndex}`
+const postFilter = ref<PostFilter>('all')
 
 onMounted(async () => {
   await postsStore.fetchPosts()
@@ -48,9 +50,14 @@ async function loadAiPlans(): Promise<void> {
 }
 
 const filteredPosts = computed(() => {
-  const posts = postsStore.posts
-  if (!channelsStore.selectedChannelId) return posts
-  return posts.filter(p => p.channelId === channelsStore.selectedChannelId)
+  let posts = postsStore.posts
+  if (channelsStore.selectedChannelId) {
+    posts = posts.filter(p => p.channelId === channelsStore.selectedChannelId)
+  }
+  if (postFilter.value === 'draft') return posts.filter(p => p.status === 'draft')
+  if (postFilter.value === 'published') return posts.filter(p => p.status === 'published')
+  if (postFilter.value === 'scheduled') return posts.filter(p => p.status === 'scheduled')
+  return posts
 })
 
 const filteredDailyPlans = computed(() => {
@@ -128,6 +135,24 @@ async function createDraftFromIdea(plan: AiPlan, idea: DailyPlanIdea | WeeklyPla
         @click="activeTab = 'weekly'"
       >
         Планы недели
+      </button>
+    </div>
+
+    <!-- Post filters -->
+    <div v-if="activeTab === 'posts'" class="history-filters">
+      <button
+        v-for="f in ([
+          { key: 'all', label: 'Все' },
+          { key: 'draft', label: 'Черновики' },
+          { key: 'published', label: 'Опубликованы' },
+          { key: 'scheduled', label: 'Запланированы' },
+        ] as const)"
+        :key="f.key"
+        class="history-filters__btn"
+        :class="{ 'history-filters__btn--active': postFilter === f.key }"
+        @click="postFilter = f.key"
+      >
+        {{ f.label }}
       </button>
     </div>
 
@@ -325,6 +350,36 @@ async function createDraftFromIdea(plan: AiPlan, idea: DailyPlanIdea | WeeklyPla
   color: var(--fp-text-secondary);
   font-size: 14px;
   padding: 32px 0;
+}
+
+/* Filters */
+.history-filters {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.history-filters::-webkit-scrollbar { display: none; }
+
+.history-filters__btn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fp-text-secondary);
+  background: var(--fp-bg-secondary);
+  transition: all var(--fp-transition);
+  white-space: nowrap;
+}
+
+.history-filters__btn--active {
+  background: var(--fp-primary);
+  color: #fff;
+  font-weight: 600;
 }
 
 /* Posts */

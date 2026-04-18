@@ -27,6 +27,7 @@ const localeStore = useLocaleStore()
 const profile = ref<ProfileData | null>(null)
 const stats = ref<ProfileStats | null>(null)
 const loading = ref(true)
+const avatarUrl = ref<string | null>(null)
 
 // Edit form
 const editing = ref(false)
@@ -60,6 +61,9 @@ onMounted(async () => {
     const [p, s] = await Promise.all([profileApi.get(), profileApi.getStats()])
     profile.value = p
     stats.value = s
+    if (p.hasPhoto) {
+      avatarUrl.value = await profileApi.getPhoto()
+    }
   } catch {
     toast.show(localeStore.t('profile.profileError'), 'error')
   } finally {
@@ -125,7 +129,10 @@ function clearAndLogout(): void {
     <template v-else-if="profile">
       <!-- Avatar & Name -->
       <div class="profile__card">
-        <div class="profile__avatar">{{ initials }}</div>
+        <div class="profile__avatar">
+          <img v-if="avatarUrl" :src="avatarUrl" class="profile__avatar-img" alt="avatar" />
+          <span v-else>{{ initials }}</span>
+        </div>
         <div class="profile__info">
           <h2 class="profile__name">{{ profile.firstName }}</h2>
           <p v-if="profile.username" class="profile__username">@{{ profile.username }}</p>
@@ -322,8 +329,8 @@ function clearAndLogout(): void {
 }
 
 .profile__avatar {
-  width: 60px;
-  height: 60px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--fp-primary) 0%, var(--fp-primary-dark) 100%);
   color: #fff;
@@ -333,7 +340,15 @@ function clearAndLogout(): void {
   font-size: 22px;
   font-weight: 700;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  overflow: hidden;
+}
+
+.profile__avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .profile__info {

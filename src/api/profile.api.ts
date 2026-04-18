@@ -9,6 +9,7 @@ export interface ProfileData {
   telegramId: string | null
   createdAt: string
   hasPassword: boolean
+  hasPhoto: boolean
 }
 
 export interface ProfileStats {
@@ -57,6 +58,16 @@ export const profileApi = {
       return
     }
     await api.post('/api/profile/change-password', { currentPassword, newPassword })
+  },
+
+  async getPhoto(): Promise<string | null> {
+    if (isMockMode || window.location.hostname === 'localhost') return null
+    try {
+      const { data } = await api.get<Blob>('/api/profile/photo', { responseType: 'blob' })
+      return URL.createObjectURL(data)
+    } catch {
+      return null
+    }
   },
 
   async getStats(): Promise<ProfileStats> {

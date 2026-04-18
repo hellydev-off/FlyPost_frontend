@@ -10,6 +10,7 @@ import PostsChart from '@/components/analytics/PostsChart.vue'
 import PostCard from '@/components/posts/PostCard.vue'
 import AppLoader from '@/components/common/AppLoader.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
+import ChannelSwitcher from '@/components/common/ChannelSwitcher.vue'
 import HealthScoreCard from '@/components/analytics/HealthScoreCard.vue'
 import BestTimeCard from '@/components/analytics/BestTimeCard.vue'
 import ShareReportModal from '@/components/analytics/ShareReportModal.vue'
@@ -27,12 +28,11 @@ const subHistory = ref<SubscriberHistory | null>(null)
 const healthScore = ref<HealthScoreData | null>(null)
 const bestTime = ref<BestTimeData | null>(null)
 const loading = ref(true)
-const selectedId = ref('')
 const showShareReport = ref(false)
 
 const shareReportData = computed<ShareReportData | null>(() => {
   if (!stats.value) return null
-  const ch = channelsStore.channels.find(c => c.id === selectedId.value)
+  const ch = channelsStore.selectedChannel
   return {
     channelTitle: ch?.title ?? '',
     channelUsername: ch?.username ?? '',
@@ -45,12 +45,9 @@ const shareReportData = computed<ShareReportData | null>(() => {
 
 onMounted(async () => {
   await channelsStore.fetchChannels()
-  if (channelsStore.selectedChannelId) {
-    selectedId.value = channelsStore.selectedChannelId
-  }
 })
 
-watch(selectedId, async (id) => {
+watch(() => channelsStore.selectedChannelId, async (id) => {
   if (!id) return
   loading.value = true
   try {
@@ -131,23 +128,9 @@ const dateLabels = computed(() => {
 
 <template>
   <div class="analytics-page">
-    <h1>{{ t('analytics.title') }}</h1>
-
-    <div class="analytics-page__channel mt">
-      <div class="analytics-page__select-wrap">
-        <AppIcon name="chart" :size="18" color="var(--fp-primary)" />
-        <select v-model="selectedId" class="analytics-page__select">
-          <option value="" disabled>{{ t('analytics.selectChannel') }}</option>
-          <option
-            v-for="ch in channelsStore.channels"
-            :key="ch.id"
-            :value="ch.id"
-          >
-            {{ ch.title }}
-          </option>
-        </select>
-        <AppIcon name="chevron-down" :size="16" color="var(--fp-text-tertiary)" />
-      </div>
+    <div class="analytics-page__header">
+      <h1>{{ t('analytics.title') }}</h1>
+      <ChannelSwitcher />
     </div>
 
     <AppLoader v-if="loading" />
@@ -278,35 +261,19 @@ const dateLabels = computed(() => {
 </template>
 
 <style scoped>
-.analytics-page h1 {
+.analytics-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.analytics-page__header h1 {
   font-size: 24px;
   font-weight: 700;
   color: var(--fp-text);
 }
 
-.analytics-page__select-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 13px 16px;
-  background: var(--fp-bg-secondary);
-  border-radius: var(--fp-radius);
-  border: 1.5px solid transparent;
-  transition: all var(--fp-transition);
-}
-
-.analytics-page__select-wrap:focus-within {
-  border-color: var(--fp-primary);
-  box-shadow: 0 0 0 3px var(--fp-primary-bg);
-}
-
-.analytics-page__select {
-  flex: 1;
-  background: transparent;
-  font-size: 15px;
-  appearance: none;
-  color: var(--fp-text);
-}
 
 .analytics-page__stats {
   display: grid;
