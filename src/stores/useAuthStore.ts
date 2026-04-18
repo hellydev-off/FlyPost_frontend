@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { authApi, type AuthResponse } from '@/api/auth.api'
+import { profileApi } from '@/api/profile.api'
 import { useToastStore } from './useToastStore'
 import { useLocaleStore } from './useLocaleStore'
 
@@ -15,6 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<AppUser | null>(null)
   const token = ref<string | null>(localStorage.getItem('fp_token'))
   const isLoading = ref(false)
+  const avatarUrl = ref<string | null>(null)
 
   const isAuthenticated = computed(() => !!token.value && !!user.value)
 
@@ -28,6 +30,12 @@ export const useAuthStore = defineStore('auth', () => {
       telegramId: result.user.telegramId,
     }
     localStorage.setItem('fp_user', JSON.stringify(user.value))
+    fetchAvatar()
+  }
+
+  async function fetchAvatar(): Promise<void> {
+    if (!user.value?.telegramId) return
+    avatarUrl.value = await profileApi.getPhoto()
   }
 
   async function telegramLogin(initData: string): Promise<void> {
@@ -65,6 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (token.value && savedUser) {
       try {
         user.value = JSON.parse(savedUser) as AppUser
+        fetchAvatar()
       } catch {
         logout()
       }
@@ -74,9 +83,10 @@ export const useAuthStore = defineStore('auth', () => {
   function logout(): void {
     user.value = null
     token.value = null
+    avatarUrl.value = null
     localStorage.removeItem('fp_token')
     localStorage.removeItem('fp_user')
   }
 
-  return { user, token, isAuthenticated, isLoading, telegramLogin, devLogin, restoreSession, logout }
+  return { user, token, avatarUrl, isAuthenticated, isLoading, telegramLogin, devLogin, restoreSession, logout }
 })

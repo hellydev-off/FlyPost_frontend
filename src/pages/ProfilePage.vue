@@ -27,7 +27,6 @@ const localeStore = useLocaleStore()
 const profile = ref<ProfileData | null>(null)
 const stats = ref<ProfileStats | null>(null)
 const loading = ref(true)
-const avatarUrl = ref<string | null>(null)
 
 // Edit form
 const editing = ref(false)
@@ -61,9 +60,6 @@ onMounted(async () => {
     const [p, s] = await Promise.all([profileApi.get(), profileApi.getStats()])
     profile.value = p
     stats.value = s
-    if (p.hasPhoto) {
-      avatarUrl.value = await profileApi.getPhoto()
-    }
   } catch {
     toast.show(localeStore.t('profile.profileError'), 'error')
   } finally {
@@ -130,7 +126,7 @@ function clearAndLogout(): void {
       <!-- Avatar & Name -->
       <div class="profile__card">
         <div class="profile__avatar">
-          <img v-if="avatarUrl" :src="avatarUrl" class="profile__avatar-img" alt="avatar" />
+          <img v-if="auth.avatarUrl" :src="auth.avatarUrl" class="profile__avatar-img" alt="avatar" />
           <span v-else>{{ initials }}</span>
         </div>
         <div class="profile__info">

@@ -73,7 +73,8 @@ function goToPost(id: string): void {
           class="home__avatar"
           @click="router.push({ name: 'profile' })"
         >
-          {{ auth.user?.firstName?.[0]?.toUpperCase() ?? '?' }}
+          <img v-if="auth.avatarUrl" :src="auth.avatarUrl" class="home__avatar-img" alt="avatar" />
+          <template v-else>{{ auth.user?.firstName?.[0]?.toUpperCase() ?? '?' }}</template>
           <span
             class="home__avatar-plan"
             :style="{ background: PLAN_META[planStore.effectivePlan].color }"
@@ -229,6 +230,15 @@ function goToPost(id: string): void {
 
 .home__avatar:active {
   transform: scale(0.9);
+}
+
+.home__avatar-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .home__avatar-plan {
