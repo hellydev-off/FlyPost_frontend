@@ -126,14 +126,14 @@ function goTo(i: number) {
 <style scoped>
 .welcome {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   transition: background 0.6s ease;
   overflow: hidden;
-  max-width: var(--fp-max-width);
-  left: 50%;
-  transform: translateX(-50%);
 }
 
 /* Slides container */
@@ -150,8 +150,43 @@ function goTo(i: number) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 32px 0;
-  gap: 32px;
+  padding: 24px 32px 0;
+  gap: 24px;
+}
+
+@media (max-height: 680px) {
+  .welcome__slide {
+    padding: 16px 24px 0;
+    gap: 16px;
+  }
+
+  .welcome__illustration {
+    width: 160px;
+    height: 160px;
+  }
+
+  .welcome__blob {
+    width: 150px;
+    height: 150px;
+  }
+
+  .welcome__blob--2 {
+    width: 100px;
+    height: 100px;
+  }
+
+  .welcome__emoji {
+    font-size: 64px;
+  }
+
+  .welcome__title {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  .welcome__desc {
+    font-size: 13px;
+  }
 }
 
 /* Illustration area */
