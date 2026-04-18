@@ -10,6 +10,7 @@ import PostCard from '@/components/posts/PostCard.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
+import ChannelSwitcher from '@/components/common/ChannelSwitcher.vue'
 import OnboardingCard from '@/components/home/OnboardingCard.vue'
 import { useOnboardingStore } from '@/stores/useOnboardingStore'
 import { usePlanStore } from '@/stores/usePlanStore'
@@ -77,6 +78,8 @@ function goToPost(id: string): void {
         </button>
       </div>
     </div>
+
+    <ChannelSwitcher class="home__channel-switcher" />
 
     <OnboardingCard v-if="!onboarding.allDone && !onboarding.dismissed" />
 
@@ -166,6 +169,10 @@ function goToPost(id: string): void {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.home__channel-switcher {
   margin-bottom: var(--fp-spacing-lg);
 }
 

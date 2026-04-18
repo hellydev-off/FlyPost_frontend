@@ -8,6 +8,7 @@ import PostStatusBadge from '@/components/posts/PostStatusBadge.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import AppButton from '@/components/common/AppButton.vue'
+import ChannelSwitcher from '@/components/common/ChannelSwitcher.vue'
 import type { AiPlan, DailyPlanIdea, WeeklyPlanIdea } from '@/types/competitor.types'
 
 type Tab = 'posts' | 'daily' | 'weekly'
@@ -102,6 +103,7 @@ async function createDraftFromIdea(plan: AiPlan, idea: DailyPlanIdea | WeeklyPla
         <AppIcon name="chevron-left" :size="20" />
       </button>
       <h1>История</h1>
+      <ChannelSwitcher />
     </div>
 
     <!-- Tabs -->

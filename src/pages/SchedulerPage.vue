@@ -6,6 +6,7 @@ import ScheduleCard from '@/components/scheduler/ScheduleCard.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import AppConfirm from '@/components/common/AppConfirm.vue'
+import ChannelSwitcher from '@/components/common/ChannelSwitcher.vue'
 
 const schedulerStore = useSchedulerStore()
 const { t } = useLocaleStore()
@@ -29,7 +30,10 @@ onMounted(() => {
 
 <template>
   <div class="scheduler-page">
-    <h1>{{ t('scheduler.title') }}</h1>
+    <div class="scheduler-page__header">
+      <h1>{{ t('scheduler.title') }}</h1>
+      <ChannelSwitcher />
+    </div>
 
     <template v-if="schedulerStore.loading">
       <div class="scheduler-page__list mt">
@@ -64,6 +68,13 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.scheduler-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
 .scheduler-page h1 {
   font-size: 24px;
   font-weight: 700;

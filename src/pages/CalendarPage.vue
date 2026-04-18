@@ -11,6 +11,7 @@ import PostStatusBadge from '@/components/posts/PostStatusBadge.vue'
 import AppSkeleton from '@/components/common/AppSkeleton.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
+import ChannelSwitcher from '@/components/common/ChannelSwitcher.vue'
 import WeeklyPlanModal from '@/components/ai/WeeklyPlanModal.vue'
 import DailyPlanModal from '@/components/ai/DailyPlanModal.vue'
 
@@ -175,6 +176,7 @@ function goToPost(id: string): void {
     <div class="calendar-page__header">
       <div class="calendar-page__header-top">
         <h1>{{ t('calendar.title') }}</h1>
+        <ChannelSwitcher />
         <AppButton size="sm" @click="router.push({ name: 'post-create' })">
           <AppIcon name="plus" :size="16" />
           {{ t('calendar.post') }}
