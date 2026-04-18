@@ -59,11 +59,14 @@ function goToPost(id: string): void {
 <template>
   <div class="home">
     <div class="home__header">
-      <div>
+      <div class="home__header-left">
         <p class="home__label">{{ t('home.welcome') }}</p>
         <h1 class="home__greeting">
           {{ auth.user?.firstName ?? t('home.user') }}
         </h1>
+      </div>
+      <div class="home__header-center">
+        <ChannelSwitcher />
       </div>
       <div class="home__header-right">
         <button
@@ -78,8 +81,6 @@ function goToPost(id: string): void {
         </button>
       </div>
     </div>
-
-    <ChannelSwitcher class="home__channel-switcher" />
 
     <OnboardingCard v-if="!onboarding.allDone && !onboarding.dismissed" />
 
@@ -169,11 +170,18 @@ function goToPost(id: string): void {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: var(--fp-spacing-lg);
 }
 
-.home__channel-switcher {
-  margin-bottom: var(--fp-spacing-lg);
+.home__header-left,
+.home__header-right {
+  flex: 1;
+}
+
+.home__header-center {
+  display: flex;
+  justify-content: center;
+  flex: 1;
 }
 
 .home__label {
