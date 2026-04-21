@@ -17,6 +17,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(localStorage.getItem('fp_token'))
   const isLoading = ref(false)
   const avatarUrl = ref<string | null>(null)
+  const isSubscribed = ref<boolean | null>(null)
 
   const isAuthenticated = computed(() => !!token.value && !!user.value)
 
@@ -31,11 +32,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
     localStorage.setItem('fp_user', JSON.stringify(user.value))
     fetchAvatar()
+    checkSubscription()
   }
 
   async function fetchAvatar(): Promise<void> {
     if (!user.value?.telegramId) return
     avatarUrl.value = await profileApi.getPhoto()
+  }
+
+  async function checkSubscription(): Promise<void> {
+    isSubscribed.value = await profileApi.checkSubscription()
   }
 
   async function telegramLogin(initData: string): Promise<void> {
@@ -74,6 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
       try {
         user.value = JSON.parse(savedUser) as AppUser
         fetchAvatar()
+        checkSubscription()
       } catch {
         logout()
       }
@@ -84,9 +91,10 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     token.value = null
     avatarUrl.value = null
+    isSubscribed.value = null
     localStorage.removeItem('fp_token')
     localStorage.removeItem('fp_user')
   }
 
-  return { user, token, avatarUrl, isAuthenticated, isLoading, telegramLogin, devLogin, restoreSession, logout }
+  return { user, token, avatarUrl, isSubscribed, isAuthenticated, isLoading, telegramLogin, devLogin, restoreSession, logout, checkSubscription }
 })

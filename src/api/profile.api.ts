@@ -77,4 +77,14 @@ export const profileApi = {
     const { data } = await api.get<ProfileStats>('/api/profile/stats')
     return data
   },
+
+  async checkSubscription(): Promise<boolean> {
+    if (isMockMode || window.location.hostname === 'localhost') return true
+    try {
+      const { data } = await api.get<{ subscribed: boolean }>('/api/profile/subscription')
+      return data.subscribed
+    } catch {
+      return true
+    }
+  },
 }

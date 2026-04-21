@@ -7,6 +7,7 @@ import AppToast from '@/components/common/AppToast.vue'
 import AchievementToast from '@/components/common/AchievementToast.vue'
 import PaywallModal from '@/components/common/PaywallModal.vue'
 import { usePlanStore } from '@/stores/usePlanStore'
+import SubscriptionGate from '@/components/common/SubscriptionGate.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -29,13 +30,19 @@ watchEffect(() => {
   <AppToast />
   <AchievementToast />
   <PaywallModal />
-  <router-view v-slot="{ Component }">
-    <Transition name="page" mode="out-in">
-      <component :is="Component" />
-    </Transition>
-  </router-view>
-  <div v-if="showNav" class="nav-floor" />
-  <AppBottomNav v-if="showNav" />
+
+  <!-- Subscription gate: показываем только когда точно НЕ подписан (null = ещё проверяем) -->
+  <SubscriptionGate v-if="auth.isAuthenticated && auth.isSubscribed === false" />
+
+  <template v-else>
+    <router-view v-slot="{ Component }">
+      <Transition name="page" mode="out-in">
+        <component :is="Component" />
+      </Transition>
+    </router-view>
+    <div v-if="showNav" class="nav-floor" />
+    <AppBottomNav v-if="showNav" />
+  </template>
 </template>
 
 <style>
