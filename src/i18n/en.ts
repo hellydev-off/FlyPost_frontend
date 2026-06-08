@@ -14,6 +14,8 @@ export default {
     dailyPlansDesc: 'Daily plan generation history',
     weeklyPlans: 'Weekly plans',
     weeklyPlansDesc: 'Weekly plan generation history',
+    news: 'News',
+    newsDesc: 'Fresh news for inspiration',
   },
   home: {
     welcome: 'Welcome',
@@ -66,6 +68,8 @@ export default {
     crossPost: 'Cross-post',
     draft: 'Draft',
     scheduleTitle: 'Schedule publication',
+    tabEditor: 'Editor',
+    tabPreview: 'Preview',
     noChannel: 'Select a channel',
     noContent: 'Write the post text',
     mediaError: 'Failed to upload media files',

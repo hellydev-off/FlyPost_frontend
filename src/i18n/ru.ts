@@ -14,6 +14,8 @@ export default {
     dailyPlansDesc: 'История генераций дневных планов',
     weeklyPlans: 'Планы на неделю',
     weeklyPlansDesc: 'История генераций недельных планов',
+    news: 'Новости',
+    newsDesc: 'Свежие новости для вдохновения',
   },
   home: {
     welcome: 'Добро пожаловать',
@@ -66,6 +68,8 @@ export default {
     crossPost: 'Кросс-постинг',
     draft: 'Черновик',
     scheduleTitle: 'Запланировать публикацию',
+    tabEditor: 'Редактор',
+    tabPreview: 'Предпросмотр',
     noChannel: 'Выберите канал',
     noContent: 'Напишите текст поста',
     mediaError: 'Медиафайлы не удалось загрузить',

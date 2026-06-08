@@ -10,6 +10,7 @@ import PostEditor from '@/components/posts/PostEditor.vue'
 import MediaUpload from '@/components/posts/MediaUpload.vue'
 import CrossPostModal from '@/components/posts/CrossPostModal.vue'
 import PostOptions from '@/components/posts/PostOptions.vue'
+import TelegramPreview from '@/components/posts/TelegramPreview.vue'
 import { postsApi } from '@/api/posts.api'
 import DateTimePicker from '@/components/scheduler/DateTimePicker.vue'
 import AppButton from '@/components/common/AppButton.vue'
@@ -43,6 +44,11 @@ onMounted(async () => {
   await channelsStore.fetchChannels()
   if (channelsStore.selectedChannelId) {
     selectedChannelId.value = channelsStore.selectedChannelId
+  }
+  const newsDraft = sessionStorage.getItem('news_draft')
+  if (newsDraft) {
+    content.value = newsDraft
+    sessionStorage.removeItem('news_draft')
   }
 })
 
@@ -148,6 +154,8 @@ function onChannelChange(e: Event): void {
   selectedChannelId.value = select.value
   selectedChannelTitle.value = select.options[select.selectedIndex]?.text ?? ''
 }
+
+const activeTab = ref<'editor' | 'preview'>('editor')
 </script>
 
 <template>
@@ -177,23 +185,56 @@ function onChannelChange(e: Event): void {
       </div>
     </div>
 
-    <!-- Editor -->
-    <div class="create-post__section">
-      <PostEditor
-        v-model="content"
-        :channel-id="selectedChannelId"
+    <!-- Tab switcher -->
+    <div class="create-post__tabs">
+      <button
+        class="create-post__tab"
+        :class="{ 'create-post__tab--active': activeTab === 'editor' }"
+        @click="activeTab = 'editor'"
+      >
+        <AppIcon name="draft" :size="15" />
+        {{ locale.t('createPost.tabEditor') }}
+      </button>
+      <button
+        class="create-post__tab"
+        :class="{ 'create-post__tab--active': activeTab === 'preview' }"
+        @click="activeTab = 'preview'"
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        {{ locale.t('createPost.tabPreview') }}
+      </button>
+    </div>
+
+    <!-- Editor tab -->
+    <template v-if="activeTab === 'editor'">
+      <div class="create-post__section">
+        <PostEditor
+          v-model="content"
+          :channel-id="selectedChannelId"
+        />
+      </div>
+
+      <div class="create-post__section">
+        <label class="create-post__label">{{ locale.t('createPost.mediaLabel') }}</label>
+        <MediaUpload :uploading="uploadingMedia" @change="files => mediaFiles = files" />
+      </div>
+
+      <div class="create-post__section">
+        <PostOptions v-model="postOptions" />
+      </div>
+    </template>
+
+    <!-- Preview tab -->
+    <div v-else class="create-post__section">
+      <TelegramPreview
+        :content="content"
+        :media-files="mediaFiles"
+        :buttons="postOptions.buttons"
+        :poll="postOptions.poll"
+        :channel-title="selectedChannelTitle || undefined"
       />
-    </div>
-
-    <!-- Media -->
-    <div class="create-post__section">
-      <label class="create-post__label">{{ locale.t('createPost.mediaLabel') }}</label>
-      <MediaUpload :uploading="uploadingMedia" @change="files => mediaFiles = files" />
-    </div>
-
-    <!-- Post Options -->
-    <div class="create-post__section">
-      <PostOptions v-model="postOptions" />
     </div>
 
     <!-- Action buttons -->
@@ -283,6 +324,36 @@ function onChannelChange(e: Event): void {
   font-weight: 500;
   appearance: none;
   color: var(--fp-text);
+}
+
+/* Tabs */
+.create-post__tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--fp-bg-secondary);
+  border-radius: var(--fp-radius);
+  padding: 4px;
+  margin-bottom: 4px;
+}
+
+.create-post__tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: calc(var(--fp-radius) - 2px);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fp-text-secondary);
+  transition: all var(--fp-transition);
+}
+
+.create-post__tab--active {
+  background: var(--fp-bg);
+  color: var(--fp-primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
 /* Actions */
