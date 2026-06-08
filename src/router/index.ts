@@ -91,6 +91,11 @@ const router = createRouter({
       component: () => import('@/pages/NewsPage.vue'),
     },
     {
+      path: '/referral',
+      name: 'referral',
+      component: () => import('@/pages/ReferralPage.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
       name: 'not-found',
       component: () => import('@/pages/NotFoundPage.vue'),

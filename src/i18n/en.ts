@@ -16,6 +16,8 @@ export default {
     weeklyPlansDesc: 'Weekly plan generation history',
     news: 'News',
     newsDesc: 'Fresh news for inspiration',
+    referral: 'Invite a friend',
+    referralDesc: 'Earn bonus PRO days',
   },
   home: {
     welcome: 'Welcome',
@@ -311,6 +313,8 @@ export default {
     streak_30_desc: 'Publish posts for 30 days without a break',
     subs_1000_title: '1000 subscribers',
     subs_1000_desc: 'Reach 1000 subscribers on your channel',
+    share: 'Share',
+    close: 'Close',
   },
   paywall: {
     title: 'Higher plan required',

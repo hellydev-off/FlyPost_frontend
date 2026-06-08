@@ -11,6 +11,7 @@ const channelsStore = useChannelsStore()
 const streak = ref<StreakData | null>(null)
 const loading = ref(true)
 const countVisible = ref(false)
+const sharing = ref(false)
 
 onMounted(async () => {
   const channelId = channelsStore.selectedChannelId
@@ -25,6 +26,54 @@ function dayLabel(n: number): string {
   if (n % 10 === 1 && n % 100 !== 11) return 'день'
   if (n % 10 >= 2 && n % 10 <= 4 && !(n % 100 >= 12 && n % 100 <= 14)) return 'дня'
   return 'дней'
+}
+
+async function shareStreak(): Promise<void> {
+  const count = streak.value?.streak ?? 0
+  sharing.value = true
+  try {
+    const { default: html2canvas } = await import('html2canvas')
+
+    // Build off-screen card
+    const card = document.createElement('div')
+    card.style.cssText = [
+      'position:fixed', 'left:-9999px', 'top:0',
+      'width:1080px', 'height:1080px',
+      'background:linear-gradient(160deg,#1c0a00 0%,#3d1500 40%,#0f172a 100%)',
+      'display:flex', 'flex-direction:column', 'align-items:center', 'justify-content:center',
+      'font-family:system-ui,sans-serif',
+    ].join(';')
+
+    card.innerHTML = `
+      <div style="font-size:120px;line-height:1;margin-bottom:24px">🔥</div>
+      <div style="font-size:180px;font-weight:900;color:#fff;line-height:1;text-shadow:0 0 60px rgba(251,146,60,0.8)">${count}</div>
+      <div style="font-size:42px;color:rgba(255,255,255,0.55);margin-top:12px">дней подряд</div>
+      <div style="font-size:38px;color:rgba(255,255,255,0.75);margin-top:40px;text-align:center;padding:0 80px">Веду Telegram-канал без пропусков</div>
+      <div style="font-size:28px;color:rgba(255,255,255,0.35);margin-top:60px">NeoPost · neo-post.ru</div>
+    `
+    document.body.appendChild(card)
+
+    const canvas = await html2canvas(card, { width: 1080, height: 1080, scale: 1, useCORS: true })
+    document.body.removeChild(card)
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return
+      const file = new File([blob], `streak-${count}.png`, { type: 'image/png' })
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: `${count} дней подряд 🔥` })
+      } else {
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `streak-${count}.png`
+        a.click()
+        URL.revokeObjectURL(url)
+      }
+    }, 'image/png')
+  } finally {
+    sharing.value = false
+  }
 }
 </script>
 
@@ -145,6 +194,17 @@ function dayLabel(n: number): string {
           </div>
         </li>
       </ul>
+
+      <!-- Share button -->
+      <button
+        v-if="(streak?.streak ?? 0) > 0"
+        class="streak-page__share-btn"
+        :disabled="sharing"
+        @click="shareStreak"
+      >
+        <span v-if="sharing">Генерация…</span>
+        <span v-else>📸 Поделиться серией</span>
+      </button>
     </div>
   </div>
 </template>
@@ -347,4 +407,19 @@ function dayLabel(n: number): string {
   color: var(--fp-text-secondary);
   line-height: 1.4;
 }
+
+.streak-page__share-btn {
+  width: 100%;
+  margin-top: 24px;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(251,146,60,0.15), rgba(234,88,12,0.1));
+  border: 1.5px solid rgba(251,146,60,0.3);
+  color: #fb923c;
+  font-size: 15px;
+  font-weight: 600;
+  transition: opacity 0.15s;
+}
+.streak-page__share-btn:active { opacity: 0.7; }
+.streak-page__share-btn:disabled { opacity: 0.5; }
 </style>

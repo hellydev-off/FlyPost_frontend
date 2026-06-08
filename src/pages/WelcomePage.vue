@@ -1,14 +1,23 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import AppButton from '@/components/common/AppButton.vue'
 import { useLocaleStore } from '@/stores/useLocaleStore'
+import { useOnboardingStore } from '@/stores/useOnboardingStore'
 
 const router = useRouter()
 const localeStore = useLocaleStore()
 const { t } = localeStore
 const { messages } = storeToRefs(localeStore)
+const onboardingStore = useOnboardingStore()
+
+onMounted(async () => {
+  await onboardingStore.load()
+  if (onboardingStore.isFromSocialTraffic) {
+    router.replace({ name: 'channels' })
+  }
+})
 
 const SLIDE_META = [
   { id: 'intro',    emoji: '🚀', gradient: 'linear-gradient(160deg, #1e3a8a 0%, #1d4ed8 50%, #3b82f6 100%)', accent: '#93c5fd' },

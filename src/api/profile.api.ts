@@ -10,6 +10,7 @@ export interface ProfileData {
   createdAt: string
   hasPassword: boolean
   hasPhoto: boolean
+  utmSource?: string | null
 }
 
 export interface ProfileStats {

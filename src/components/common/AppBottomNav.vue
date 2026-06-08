@@ -21,7 +21,7 @@ function isActive(tabName: string): boolean {
   return route.name === tabName
 }
 
-const MORE_ROUTES = new Set(['analytics', 'history', 'templates', 'profile', 'streak', 'scheduler', 'pricing', 'competitors', 'news'])
+const MORE_ROUTES = new Set(['analytics', 'history', 'templates', 'profile', 'streak', 'scheduler', 'pricing', 'competitors', 'news', 'referral'])
 
 const isMoreActive = computed(() =>
   typeof route.name === 'string' && MORE_ROUTES.has(route.name),
@@ -89,6 +89,17 @@ function navigate(path: string): void {
           <div class="more-sheet__item-body">
             <span class="more-sheet__item-label">{{ locale.t('nav.news') }}</span>
             <span class="more-sheet__item-desc">{{ locale.t('nav.newsDesc') }}</span>
+          </div>
+          <AppIcon name="chevron-right" :size="16" />
+        </button>
+
+        <button class="more-sheet__item" @click="navigate('/referral')">
+          <span class="more-sheet__item-icon more-sheet__item-icon--referral">
+            <AppIcon name="channels" :size="20" />
+          </span>
+          <div class="more-sheet__item-body">
+            <span class="more-sheet__item-label">{{ locale.t('nav.referral') }}</span>
+            <span class="more-sheet__item-desc">{{ locale.t('nav.referralDesc') }}</span>
           </div>
           <AppIcon name="chevron-right" :size="16" />
         </button>
@@ -294,6 +305,7 @@ function navigate(path: string): void {
 .more-sheet__item-icon--daily { background: rgba(16,185,129,0.1); color: #10B981; }
 .more-sheet__item-icon--weekly { background: rgba(139,92,246,0.1); color: #8B5CF6; }
 .more-sheet__item-icon--news { background: rgba(245,158,11,0.1); color: #F59E0B; }
+.more-sheet__item-icon--referral { background: rgba(16,185,129,0.1); color: #10B981; }
 
 .more-sheet__item-body {
   flex: 1;

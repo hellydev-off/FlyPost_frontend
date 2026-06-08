@@ -12,14 +12,14 @@ export interface AuthResponse {
 }
 
 export const authApi = {
-  async telegram(initData: string): Promise<AuthResponse> {
+  async telegram(initData: string, utmSource?: string): Promise<AuthResponse> {
     if (isMockMode) {
       return withDelay<AuthResponse>({
         token: 'mock-jwt-token',
         user: { id: 'mock-1', telegramId: '12345', username: 'mockuser', firstName: 'Mock User' },
       })
     }
-    const { data } = await api.post<AuthResponse>('/api/auth/telegram', { initData })
+    const { data } = await api.post<AuthResponse>('/api/auth/telegram', { initData, utmSource })
     return data
   },
 

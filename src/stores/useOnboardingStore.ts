@@ -4,12 +4,15 @@ import { useChannelsStore } from './useChannelsStore'
 import { useLocaleStore } from './useLocaleStore'
 import { profileApi } from '@/api/profile.api'
 
+const SOCIAL_PREFIXES = ['tt_', 'ig_', 'yt_']
+
 export const useOnboardingStore = defineStore('onboarding', () => {
   const DISMISS_KEY = 'fp_onboarding_dismissed'
 
   const dismissed = ref(localStorage.getItem(DISMISS_KEY) === '1')
   const postsCount = ref(0)
   const scheduledCount = ref(0)
+  const utmSource = ref<string | null>(null)
 
   const channelsStore = useChannelsStore()
   const locale = useLocaleStore()
@@ -38,11 +41,21 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   const doneCount = computed(() => steps.value.filter(s => s.done).length)
   const allDone = computed(() => doneCount.value === steps.value.length)
 
+  const isFromSocialTraffic = computed(() =>
+    utmSource.value
+      ? SOCIAL_PREFIXES.some(p => utmSource.value!.startsWith(p))
+      : false,
+  )
+
   async function load(): Promise<void> {
     try {
-      const stats = await profileApi.getStats()
+      const [stats, profile] = await Promise.all([
+        profileApi.getStats(),
+        profileApi.get(),
+      ])
       postsCount.value = stats.posts
       scheduledCount.value = stats.scheduled
+      utmSource.value = profile.utmSource ?? null
     } catch {
       // fail silently
     }
@@ -53,5 +66,5 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     localStorage.setItem(DISMISS_KEY, '1')
   }
 
-  return { dismissed, steps, doneCount, allDone, load, dismiss }
+  return { dismissed, steps, doneCount, allDone, utmSource, isFromSocialTraffic, load, dismiss }
 })

@@ -18,6 +18,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: string]
+  'generated': [elapsedSeconds: number]
 }>()
 
 const toast = useToastStore()
@@ -57,6 +58,7 @@ const lengthOptions = computed(() => [
 async function generateAi(): Promise<void> {
   if (!aiTopic.value.trim()) return
   aiLoading.value = true
+  const startedAt = Date.now()
   try {
     const result = await aiApi.generate({
       topic: aiTopic.value,
@@ -65,6 +67,7 @@ async function generateAi(): Promise<void> {
       channelId: props.channelId,
     })
     emit('update:modelValue', result.content)
+    emit('generated', Math.round((Date.now() - startedAt) / 1000))
     showAiModal.value = false
     aiTopic.value = ''
   } catch {

@@ -11,10 +11,32 @@ import MediaUpload from '@/components/posts/MediaUpload.vue'
 import CrossPostModal from '@/components/posts/CrossPostModal.vue'
 import PostOptions from '@/components/posts/PostOptions.vue'
 import TelegramPreview from '@/components/posts/TelegramPreview.vue'
+import FirstGenerationModal from '@/components/posts/FirstGenerationModal.vue'
 import { postsApi } from '@/api/posts.api'
 import DateTimePicker from '@/components/scheduler/DateTimePicker.vue'
 import AppButton from '@/components/common/AppButton.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
+
+const FIRST_GEN_KEY = 'fp_first_gen_done'
+const showFirstGenModal = ref(false)
+const firstGenElapsed = ref(0)
+
+function onEditorGenerated(elapsedSeconds: number): void {
+  if (localStorage.getItem(FIRST_GEN_KEY)) return
+  firstGenElapsed.value = elapsedSeconds
+  showFirstGenModal.value = true
+  localStorage.setItem(FIRST_GEN_KEY, '1')
+}
+
+async function onFirstGenPublish(): Promise<void> {
+  showFirstGenModal.value = false
+  await publishNow()
+}
+
+function onFirstGenSchedule(): void {
+  showFirstGenModal.value = false
+  showScheduler.value = true
+}
 
 const router = useRouter()
 const channelsStore = useChannelsStore()
@@ -213,6 +235,7 @@ const activeTab = ref<'editor' | 'preview'>('editor')
         <PostEditor
           v-model="content"
           :channel-id="selectedChannelId"
+          @generated="onEditorGenerated"
         />
       </div>
 
@@ -275,6 +298,14 @@ const activeTab = ref<'editor' | 'preview'>('editor')
       :loading="crossPosting"
       @close="showCrossPost = false"
       @confirm="publishWithCrossPost"
+    />
+
+    <FirstGenerationModal
+      v-if="showFirstGenModal"
+      :elapsed-seconds="firstGenElapsed"
+      @publish="onFirstGenPublish"
+      @schedule="onFirstGenSchedule"
+      @close="showFirstGenModal = false"
     />
   </div>
 </template>
