@@ -47,8 +47,10 @@ export const useAuthStore = defineStore('auth', () => {
   async function telegramLogin(initData: string): Promise<void> {
     isLoading.value = true
     try {
-      const utmSource = window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? undefined
-      const result = await authApi.telegram(initData, utmSource)
+      const startParam = window.Telegram?.WebApp?.initDataUnsafe?.start_param ?? ''
+      const referralCode = startParam.startsWith('ref_') ? startParam.slice(4) : undefined
+      const utmSource = !startParam.startsWith('ref_') && startParam ? startParam : undefined
+      const result = await authApi.telegram(initData, utmSource, referralCode)
       applyResult(result)
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })
