@@ -25,6 +25,10 @@ export const usePlanStore = defineStore('plan', () => {
     }
   }
 
+  async function devSetPlan(plan: PlanKey): Promise<void> {
+    status.value = await subscriptionApi.devSetPlan(plan)
+  }
+
   function showPaywall(limitCode: string): void {
     paywallLimitCode.value = limitCode
   }
@@ -75,5 +79,6 @@ export const usePlanStore = defineStore('plan', () => {
     canUseAi,
     canAddTemplate,
     hasFeature,
+    devSetPlan,
   }
 })

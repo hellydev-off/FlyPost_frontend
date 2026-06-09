@@ -8,12 +8,14 @@ import AchievementToast from '@/components/common/AchievementToast.vue'
 import PaywallModal from '@/components/common/PaywallModal.vue'
 import { usePlanStore } from '@/stores/usePlanStore'
 import SubscriptionGate from '@/components/common/SubscriptionGate.vue'
+import DevPanel from '@/components/common/DevPanel.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
 const planStore = usePlanStore()
 
 const showNav = computed(() => auth.isAuthenticated && !route.meta.guest)
+const isDev = import.meta.env.DEV
 
 // Sync guest class on #app element for CSS to remove nav padding
 watchEffect(() => {
@@ -42,6 +44,7 @@ watchEffect(() => {
     </router-view>
     <div v-if="showNav" class="nav-floor" />
     <AppBottomNav v-if="showNav" />
+    <DevPanel v-if="isDev && auth.isAuthenticated" />
   </template>
 </template>
 

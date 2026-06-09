@@ -113,6 +113,22 @@ const planColors: Record<string, string> = {
   pro:   '#8B5CF6',
   max:   '#F59E0B',
 }
+
+const isDev = import.meta.env.DEV
+const allPlans: PlanKey[] = ['free', 'start', 'pro', 'max']
+const devLoading = ref<PlanKey | null>(null)
+
+async function devSwitchPlan(plan: PlanKey): Promise<void> {
+  devLoading.value = plan
+  try {
+    await planStore.devSetPlan(plan)
+    toast.show(`DEV: тариф «${plan}» активирован`, 'success')
+  } catch {
+    toast.show('DEV: ошибка переключения тарифа', 'error')
+  } finally {
+    devLoading.value = null
+  }
+}
 </script>
 
 <template>
@@ -137,6 +153,24 @@ const planColors: Record<string, string> = {
         <path d="M9 3H15M10 3V9L7.5 14M14 9V3M14 9L16.5 14M7.5 14H16.5M7.5 14L6 18H18L16.5 14"/>
       </svg>
       {{ t('pricing.testBanner') }}
+    </div>
+
+    <!-- Dev plan switcher -->
+    <div v-if="isDev" class="pricing__dev-panel">
+      <span class="pricing__dev-label">⚙ DEV: тариф</span>
+      <div class="pricing__dev-plans">
+        <button
+          v-for="plan in allPlans"
+          :key="plan"
+          class="pricing__dev-btn"
+          :class="{ 'pricing__dev-btn--active': planStore.effectivePlan === plan && !planStore.isTrial }"
+          :disabled="devLoading !== null"
+          @click="devSwitchPlan(plan)"
+        >
+          <span v-if="devLoading === plan" class="pricing__spinner pricing__spinner--dark" />
+          <template v-else>{{ plan }}</template>
+        </button>
+      </div>
     </div>
 
     <!-- Period toggle -->
@@ -281,6 +315,58 @@ const planColors: Record<string, string> = {
   font-weight: 600;
   margin-top: 4px;
 }
+
+/* Dev panel */
+.pricing__dev-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(16, 185, 129, 0.06);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--fp-radius-sm);
+  margin-bottom: 16px;
+}
+
+.pricing__dev-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #10B981;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pricing__dev-plans {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pricing__dev-btn {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--fp-bg-secondary);
+  color: var(--fp-text-secondary);
+  border: 1px solid var(--fp-border);
+  transition: all var(--fp-transition);
+  min-width: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pricing__dev-btn:not(:disabled):hover {
+  border-color: #10B981;
+  color: #10B981;
+}
+.pricing__dev-btn--active {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: #10B981;
+  color: #10B981;
+}
+.pricing__dev-btn:disabled { opacity: 0.5; }
 
 /* Test banner */
 .pricing__test-banner {

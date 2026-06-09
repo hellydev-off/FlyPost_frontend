@@ -229,8 +229,8 @@ const activeTab = ref<'editor' | 'preview'>('editor')
       </button>
     </div>
 
-    <!-- Editor tab -->
-    <template v-if="activeTab === 'editor'">
+    <!-- Editor tab — v-show сохраняет стейт MediaUpload при переключении вкладок -->
+    <div v-show="activeTab === 'editor'">
       <div class="create-post__section">
         <PostEditor
           v-model="content"
@@ -247,10 +247,10 @@ const activeTab = ref<'editor' | 'preview'>('editor')
       <div class="create-post__section">
         <PostOptions v-model="postOptions" />
       </div>
-    </template>
+    </div>
 
     <!-- Preview tab -->
-    <div v-else class="create-post__section">
+    <div v-show="activeTab === 'preview'" class="create-post__section">
       <TelegramPreview
         :content="content"
         :media-files="mediaFiles"

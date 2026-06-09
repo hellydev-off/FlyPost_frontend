@@ -36,4 +36,10 @@ export const subscriptionApi = {
     const { data } = await api.post<SubscriptionStatus>('/api/subscription/downgrade-free')
     return data
   },
+
+  /** DEV ONLY: switch plan instantly without payment */
+  async devSetPlan(plan: PlanKey): Promise<SubscriptionStatus> {
+    const { data } = await api.post<SubscriptionStatus>('/api/subscription/dev-set-plan', { plan })
+    return data
+  },
 }

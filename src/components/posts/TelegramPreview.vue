@@ -12,26 +12,43 @@ const props = defineProps<{
 
 // ── Object URLs for preview ───────────────────────────────────────────────────
 
-const fileUrls = ref<string[]>([])
+interface MediaItem { url: string; type: 'image' | 'video' }
+interface FileItem  { name: string; size: string; kind: 'audio' | 'document' }
+
+const mediaItems = ref<MediaItem[]>([])
+const fileItems  = ref<FileItem[]>([])
+
+function fmtSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / 1024 / 1024).toFixed(1) + ' MB'
+}
 
 watch(
-  () => props.mediaFiles,
-  (files) => {
-    fileUrls.value.forEach(u => URL.revokeObjectURL(u))
-    fileUrls.value = (files ?? [])
-      .filter(f => f.type.startsWith('image/') || f.type.startsWith('video/'))
-      .map(f => URL.createObjectURL(f))
+  () => (props.mediaFiles ?? []).map(f => f.name + f.size + f.lastModified).join(','),
+  () => {
+    mediaItems.value.forEach(m => URL.revokeObjectURL(m.url))
+    mediaItems.value = []
+    fileItems.value  = []
+
+    for (const f of (props.mediaFiles ?? [])) {
+      if (f.type.startsWith('image/')) {
+        mediaItems.value.push({ url: URL.createObjectURL(f), type: 'image' })
+      } else if (f.type.startsWith('video/')) {
+        mediaItems.value.push({ url: URL.createObjectURL(f), type: 'video' })
+      } else if (f.type.startsWith('audio/')) {
+        fileItems.value.push({ name: f.name, size: fmtSize(f.size), kind: 'audio' })
+      } else {
+        fileItems.value.push({ name: f.name, size: fmtSize(f.size), kind: 'document' })
+      }
+    }
   },
   { immediate: true },
 )
 
 onUnmounted(() => {
-  fileUrls.value.forEach(u => URL.revokeObjectURL(u))
+  mediaItems.value.forEach(m => URL.revokeObjectURL(m.url))
 })
-
-const isVideo = computed(() =>
-  (props.mediaFiles ?? []).map(f => f.type.startsWith('video/')),
-)
 
 // ── Telegram Markdown → HTML ──────────────────────────────────────────────────
 
@@ -85,10 +102,11 @@ const renderedContent = computed(() =>
 // ── State ─────────────────────────────────────────────────────────────────────
 
 const hasContent = computed(() => props.content.trim().length > 0)
-const hasMedia   = computed(() => fileUrls.value.length > 0)
+const hasMedia   = computed(() => mediaItems.value.length > 0)
+const hasFiles   = computed(() => fileItems.value.length > 0)
 const hasButtons = computed(() => (props.buttons ?? []).length > 0)
 const hasPoll    = computed(() => !!props.poll?.question)
-const isEmpty    = computed(() => !hasContent.value && !hasMedia.value && !hasButtons.value && !hasPoll.value)
+const isEmpty    = computed(() => !hasContent.value && !hasMedia.value && !hasFiles.value && !hasButtons.value && !hasPoll.value)
 
 const initials = computed(() => (props.channelTitle ?? 'C').charAt(0).toUpperCase())
 
@@ -99,24 +117,17 @@ const timeStr = computed(() => {
 
 // Media grid layout class
 const mediaClass = computed(() => {
-  const n = fileUrls.value.length
+  const n = mediaItems.value.length
   if (n === 1) return 'tg-media--single'
   if (n === 2) return 'tg-media--two'
   if (n === 3) return 'tg-media--three'
-  return 'tg-media--four'
+  if (n === 4) return 'tg-media--four'
+  return 'tg-media--many'
 })
 </script>
 
 <template>
   <div class="tg-preview">
-    <!-- Label -->
-    <div class="tg-preview__label">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-        <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      Предпросмотр в Telegram
-    </div>
-
     <!-- Feed wrapper (Telegram wallpaper feeling) -->
     <div class="tg-feed">
 
@@ -137,19 +148,38 @@ const mediaClass = computed(() => {
           <div class="tg-bubble__channel">{{ channelTitle || 'Канал' }}</div>
         </div>
 
-        <!-- Media grid -->
+        <!-- Media grid (images + videos) -->
         <div v-if="hasMedia" class="tg-media" :class="mediaClass">
           <div
-            v-for="(url, i) in fileUrls"
-            :key="url"
+            v-for="item in mediaItems"
+            :key="item.url"
             class="tg-media__item"
           >
-            <video v-if="isVideo[i]" :src="url" class="tg-media__img" muted />
-            <img v-else :src="url" class="tg-media__img" />
-            <div v-if="isVideo[i]" class="tg-media__play">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z"/>
+            <video v-if="item.type === 'video'" :src="item.url" class="tg-media__img" muted />
+            <img v-else :src="item.url" class="tg-media__img" />
+            <div v-if="item.type === 'video'" class="tg-media__play">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- File attachments (audio, documents) -->
+        <div v-if="hasFiles" class="tg-files">
+          <div v-for="(f, i) in fileItems" :key="i" class="tg-file">
+            <div class="tg-file__icon" :class="`tg-file__icon--${f.kind}`">
+              <!-- Audio icon -->
+              <svg v-if="f.kind === 'audio'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
               </svg>
+              <!-- Document icon -->
+              <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+            </div>
+            <div class="tg-file__info">
+              <span class="tg-file__name">{{ f.name }}</span>
+              <span class="tg-file__meta">{{ f.kind === 'audio' ? 'Аудио' : 'Документ' }} · {{ f.size }}</span>
             </div>
           </div>
         </div>
@@ -219,9 +249,12 @@ const mediaClass = computed(() => {
         <!-- Timestamp -->
         <div class="tg-bubble__footer">
           <span class="tg-bubble__time">{{ timeStr }}</span>
-          <svg width="14" height="10" viewBox="0 0 16 11" fill="none" class="tg-bubble__read">
-            <path d="M1 5.5L5 9.5L15 1.5" stroke="#4EABF8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M5 5.5L9 9.5" stroke="#4EABF8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Telegram double checkmark (read receipts) -->
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="none" class="tg-bubble__read">
+            <!-- Back check -->
+            <path d="M1 6L4.5 9.5L10.5 1.5" stroke="#4EABF8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/>
+            <!-- Front check (offset right by 4px) -->
+            <path d="M5 6L8.5 9.5L14.5 1.5" stroke="#4EABF8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
       </div>
@@ -235,17 +268,6 @@ const mediaClass = computed(() => {
 .tg-preview {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.tg-preview__label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--fp-text-tertiary);
-  letter-spacing: 0.3px;
 }
 
 /* ── Feed (wallpaper bg) ── */
@@ -322,26 +344,46 @@ const mediaClass = computed(() => {
   overflow: hidden;
 }
 
-.tg-media--single {
-  grid-template-columns: 1fr;
+/* 1 file — full width, natural aspect ratio */
+.tg-media--single { grid-template-columns: 1fr; }
+.tg-media--single .tg-media__item {
+  aspect-ratio: auto;
+  max-height: 300px;
+}
+.tg-media--single .tg-media__img {
+  max-height: 300px;
+  height: auto;
+  object-fit: contain;
 }
 
-.tg-media--two {
-  grid-template-columns: 1fr 1fr;
-}
+/* 2 files — side by side */
+.tg-media--two { grid-template-columns: 1fr 1fr; }
+.tg-media--two .tg-media__item { aspect-ratio: 1/1; }
 
+/* 3 files — first full width, two below */
 .tg-media--three {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: auto auto;
 }
 .tg-media--three .tg-media__item:first-child {
   grid-column: 1 / -1;
+  aspect-ratio: 16/9;
+}
+.tg-media--three .tg-media__item:not(:first-child) { aspect-ratio: 1/1; }
+
+/* 4 files — 2×2 grid */
+.tg-media--four { grid-template-columns: 1fr 1fr; }
+.tg-media--four .tg-media__item { aspect-ratio: 1/1; }
+
+/* 5+ files — 3-column grid */
+.tg-media--many { grid-template-columns: 1fr 1fr 1fr; }
+.tg-media--many .tg-media__item { aspect-ratio: 1/1; }
+.tg-media--many .tg-media__item:first-child {
+  grid-column: 1 / -1;
+  aspect-ratio: 16/9;
 }
 
-.tg-media--four {
-  grid-template-columns: 1fr 1fr;
-}
-
+/* Base item */
 .tg-media__item {
   position: relative;
   overflow: hidden;
@@ -349,22 +391,11 @@ const mediaClass = computed(() => {
   aspect-ratio: 16/9;
 }
 
-.tg-media--single .tg-media__item {
-  aspect-ratio: auto;
-  max-height: 280px;
-}
-
 .tg-media__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-}
-
-.tg-media--single .tg-media__img {
-  max-height: 280px;
-  height: auto;
-  object-fit: contain;
 }
 
 .tg-media__play {
@@ -417,6 +448,59 @@ const mediaClass = computed(() => {
 .tg-bubble__text :deep(.tg-link) {
   color: #5cb8ff;
   text-decoration: none;
+}
+
+/* ── File attachments ── */
+.tg-files {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px 2px;
+}
+
+.tg-file {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+}
+
+.tg-file__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.tg-file__icon--audio    { background: #3b82f6; }
+.tg-file__icon--document { background: #10b981; }
+
+.tg-file__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.tg-file__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e8eaf0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tg-file__meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
 }
 
 /* ── Inline Buttons ── */

@@ -1,127 +1,148 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { storeToRefs } from 'pinia'
-import AppTextarea from '@/components/common/AppTextarea.vue'
-import AppButton from '@/components/common/AppButton.vue'
-import AppModal from '@/components/common/AppModal.vue'
-import AppIcon from '@/components/common/AppIcon.vue'
-import { aiApi, type GeneratePayload, type ImproveAction } from '@/api/ai.api'
-import { useToastStore } from '@/stores/useToastStore'
-import { usePlanStore } from '@/stores/usePlanStore'
-import { useLocaleStore } from '@/stores/useLocaleStore'
-import TemplatePickerModal from './TemplatePickerModal.vue'
+import { ref, computed } from "vue";
+import { storeToRefs } from "pinia";
+import AppTextarea from "@/components/common/AppTextarea.vue";
+import AppButton from "@/components/common/AppButton.vue";
+import AppModal from "@/components/common/AppModal.vue";
+import AppIcon from "@/components/common/AppIcon.vue";
+import { aiApi, type GeneratePayload, type ImproveAction } from "@/api/ai.api";
+import { useToastStore } from "@/stores/useToastStore";
+import { usePlanStore } from "@/stores/usePlanStore";
+import { useLocaleStore } from "@/stores/useLocaleStore";
+import TemplatePickerModal from "./TemplatePickerModal.vue";
 
 const props = defineProps<{
-  modelValue: string
-  channelId: string
-}>()
+  modelValue: string;
+  channelId: string;
+}>();
 
 const emit = defineEmits<{
-  'update:modelValue': [value: string]
-  'generated': [elapsedSeconds: number]
-}>()
+  "update:modelValue": [value: string];
+  generated: [elapsedSeconds: number];
+}>();
 
-const toast = useToastStore()
-const planStore = usePlanStore()
-const localeStore = useLocaleStore()
-const { t } = localeStore
-const { messages } = storeToRefs(localeStore)
+const toast = useToastStore();
+const planStore = usePlanStore();
+const localeStore = useLocaleStore();
+const { t } = localeStore;
+const { messages } = storeToRefs(localeStore);
 
 // --- Templates ---
-const showTemplatesModal = ref(false)
+const showTemplatesModal = ref(false);
 
 function onTemplatePick(content: string): void {
-  emit('update:modelValue', content)
-  showTemplatesModal.value = false
+  emit("update:modelValue", content);
+  showTemplatesModal.value = false;
 }
 
 // --- Generate ---
-const showAiModal = ref(false)
-const aiLoading = ref(false)
-const aiTopic = ref('')
-const aiTone = ref<GeneratePayload['tone']>('neutral')
-const aiLength = ref<GeneratePayload['length']>('medium')
+const showAiModal = ref(false);
+const aiLoading = ref(false);
+const aiTopic = ref("");
+const aiTone = ref<GeneratePayload["tone"]>("neutral");
+const aiLength = ref<GeneratePayload["length"]>("medium");
 
-const toneOptions = computed(() => [
-  { value: 'neutral', label: t('editor.tones.neutral') },
-  { value: 'expert', label: t('editor.tones.expert') },
-  { value: 'friendly', label: t('editor.tones.friendly') },
-  { value: 'sales', label: t('editor.tones.sales') },
-] as const)
+const toneOptions = computed(
+  () =>
+    [
+      { value: "neutral", label: t("editor.tones.neutral") },
+      { value: "expert", label: t("editor.tones.expert") },
+      { value: "friendly", label: t("editor.tones.friendly") },
+      { value: "sales", label: t("editor.tones.sales") },
+    ] as const,
+);
 
-const lengthOptions = computed(() => [
-  { value: 'short', label: t('editor.lengths.short') },
-  { value: 'medium', label: t('editor.lengths.medium') },
-  { value: 'long', label: t('editor.lengths.long') },
-] as const)
+const lengthOptions = computed(
+  () =>
+    [
+      { value: "short", label: t("editor.lengths.short") },
+      { value: "medium", label: t("editor.lengths.medium") },
+      { value: "long", label: t("editor.lengths.long") },
+    ] as const,
+);
 
 async function generateAi(): Promise<void> {
-  if (!aiTopic.value.trim()) return
-  aiLoading.value = true
-  const startedAt = Date.now()
+  if (!aiTopic.value.trim()) return;
+  aiLoading.value = true;
+  const startedAt = Date.now();
   try {
     const result = await aiApi.generate({
       topic: aiTopic.value,
       tone: aiTone.value,
       length: aiLength.value,
       channelId: props.channelId,
-    })
-    emit('update:modelValue', result.content)
-    emit('generated', Math.round((Date.now() - startedAt) / 1000))
-    showAiModal.value = false
-    aiTopic.value = ''
-  } catch {
-    toast.show(t('editor.ai.generateError'), 'error')
+    });
+    emit("update:modelValue", result.content);
+    emit("generated", Math.round((Date.now() - startedAt) / 1000));
+    showAiModal.value = false;
+    aiTopic.value = "";
+  } catch (err: unknown) {
+    // 402 → axios interceptor уже показал paywall, toast не нужен
+    const status = (err as { response?: { status?: number } })?.response
+      ?.status;
+    if (status !== 402) {
+      toast.show(t("editor.ai.generateError"), "error");
+    }
   } finally {
-    aiLoading.value = false
+    aiLoading.value = false;
   }
 }
 
 // --- Improve ---
-const improveLoading = ref<ImproveAction | null>(null)
-const showToneModal = ref(false)
-const improveTone = ref(messages.value?.editor?.tonePresets?.[0] ?? '')
+const improveLoading = ref<ImproveAction | null>(null);
+const showToneModal = ref(false);
+const improveTone = ref(messages.value?.editor?.tonePresets?.[0] ?? "");
 
-const hasContent = computed(() => props.modelValue.trim().length > 0)
+const hasContent = computed(() => props.modelValue.trim().length > 0);
 
-const improveActions = computed((): Array<{ action: ImproveAction; icon: string; label: string }> => [
-  { action: 'shorten', icon: 'scissors', label: t('editor.improve.shorten') },
-  { action: 'expand', icon: 'expand', label: t('editor.improve.expand') },
-  { action: 'rephrase', icon: 'refresh', label: t('editor.improve.rephrase') },
-  { action: 'fix', icon: 'check', label: t('editor.improve.fix') },
-  { action: 'tone', icon: 'mask', label: t('editor.improve.tone') },
-])
+const improveActions = computed(
+  (): Array<{ action: ImproveAction; icon: string; label: string }> => [
+    { action: "shorten", icon: "scissors", label: t("editor.improve.shorten") },
+    { action: "expand", icon: "expand", label: t("editor.improve.expand") },
+    {
+      action: "rephrase",
+      icon: "refresh",
+      label: t("editor.improve.rephrase"),
+    },
+    { action: "fix", icon: "check", label: t("editor.improve.fix") },
+    { action: "tone", icon: "mask", label: t("editor.improve.tone") },
+  ],
+);
 
-const tonePresets = computed(() => messages.value?.editor?.tonePresets ?? [])
+const tonePresets = computed(() => messages.value?.editor?.tonePresets ?? []);
 
 async function runImprove(action: ImproveAction, tone?: string): Promise<void> {
   if (!hasContent.value) {
-    toast.show(t('editor.ai.noText'), 'error')
-    return
+    toast.show(t("editor.ai.noText"), "error");
+    return;
   }
-  improveLoading.value = action
+  improveLoading.value = action;
   try {
     const result = await aiApi.improve({
       content: props.modelValue,
       action,
       tone,
-    })
-    emit('update:modelValue', result.content)
-    if (action === 'tone') showToneModal.value = false
-    toast.show(t('editor.ai.improved'), 'success')
-  } catch {
-    toast.show(t('editor.ai.improveError'), 'error')
+    });
+    emit("update:modelValue", result.content);
+    if (action === "tone") showToneModal.value = false;
+    toast.show(t("editor.ai.improved"), "success");
+  } catch (err: unknown) {
+    const status = (err as { response?: { status?: number } })?.response
+      ?.status;
+    if (status !== 402) {
+      toast.show(t("editor.ai.improveError"), "error");
+    }
   } finally {
-    improveLoading.value = null
+    improveLoading.value = null;
   }
 }
 
 function onImproveClick(action: ImproveAction): void {
-  if (action === 'tone') {
-    showToneModal.value = true
-    return
+  if (action === "tone") {
+    showToneModal.value = true;
+    return;
   }
-  runImprove(action)
+  runImprove(action);
 }
 </script>
 
@@ -134,40 +155,65 @@ function onImproveClick(action: ImproveAction): void {
       :rows="8"
       @update:model-value="$emit('update:modelValue', $event)"
     />
-    <div class="post-editor__char-bar">
-      <span
-        class="post-editor__char-bar-count"
-        :class="{
-          'post-editor__char-bar-count--warn': modelValue.length >= 3800,
-          'post-editor__char-bar-count--danger': modelValue.length >= 4000,
-        }"
-      >{{ modelValue.length }} / 4096</span>
-    </div>
+    <div class="post-editor__char-bar"></div>
 
     <!-- AI toolbar -->
     <div class="ai-toolbar">
       <button
         class="ai-toolbar__gen"
         :class="{ 'ai-toolbar__gen--locked': !planStore.canUseAi() }"
-        @click="planStore.canUseAi() ? (showAiModal = true) : planStore.showPaywall('LIMIT_AI')"
+        @click="
+          planStore.canUseAi()
+            ? (showAiModal = true)
+            : planStore.showPaywall('LIMIT_AI')
+        "
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M13 10V3L4 14h7v7l9-11h-7z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
-        <span>{{ t('editor.generate') }}</span>
-        <span v-if="!planStore.canUseAi()" class="ai-toolbar__lock-badge">PRO</span>
+        <span>{{ t("editor.generate") }}</span>
+        <span v-if="!planStore.canUseAi()" class="ai-toolbar__lock-badge"
+          >PRO</span
+        >
       </button>
       <button
         class="ai-toolbar__tpl"
-        :class="{ 'ai-toolbar__tpl--locked': !planStore.canAddTemplate() && planStore.limits.templates === 0 }"
-        @click="(planStore.limits.templates === 0) ? planStore.showPaywall('LIMIT_TEMPLATES') : (showTemplatesModal = true)"
+        :class="{
+          'ai-toolbar__tpl--locked':
+            !planStore.canAddTemplate() && planStore.limits.templates === 0,
+        }"
+        @click="
+          planStore.limits.templates === 0
+            ? planStore.showPaywall('LIMIT_TEMPLATES')
+            : (showTemplatesModal = true)
+        "
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.8" fill="none"/>
-          <path d="M14 2v6h6M9 13h6M9 17h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          <path
+            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+            stroke="currentColor"
+            stroke-width="1.8"
+            fill="none"
+          />
+          <path
+            d="M14 2v6h6M9 13h6M9 17h4"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
         </svg>
-        <span>{{ t('editor.templates') }}</span>
-        <span v-if="planStore.limits.templates === 0" class="ai-toolbar__lock-badge">PRO</span>
+        <span>{{ t("editor.templates") }}</span>
+        <span
+          v-if="planStore.limits.templates === 0"
+          class="ai-toolbar__lock-badge"
+          >PRO</span
+        >
       </button>
       <span class="ai-toolbar__divider" />
       <button
@@ -177,29 +223,29 @@ function onImproveClick(action: ImproveAction): void {
         :class="{ 'ai-toolbar__btn--loading': improveLoading === item.action }"
         :disabled="!hasContent || improveLoading !== null"
         :title="item.label"
-        @click="planStore.canUseAi() ? onImproveClick(item.action) : planStore.showPaywall('LIMIT_AI')"
+        @click="
+          planStore.canUseAi()
+            ? onImproveClick(item.action)
+            : planStore.showPaywall('LIMIT_AI')
+        "
       >
-        <span v-if="improveLoading === item.action" class="ai-toolbar__spinner" />
+        <span
+          v-if="improveLoading === item.action"
+          class="ai-toolbar__spinner"
+        />
         <AppIcon v-else :name="item.icon" :size="16" />
       </button>
     </div>
 
-    <!-- Preview -->
-    <div v-if="modelValue" class="post-editor__preview">
-      <div class="post-editor__preview-header">
-        <span class="post-editor__preview-label">{{ t('editor.preview') }}</span>
-        <span class="post-editor__char-count">
-          {{ modelValue.length }} / 4096
-        </span>
-      </div>
-      <div class="post-editor__preview-text">{{ modelValue }}</div>
-    </div>
-
     <!-- Generate modal -->
-    <AppModal v-if="showAiModal" :title="t('editor.ai.title')" @close="showAiModal = false">
+    <AppModal
+      v-if="showAiModal"
+      :title="t('editor.ai.title')"
+      @close="showAiModal = false"
+    >
       <div class="ai-form">
         <div class="ai-form__field">
-          <label class="ai-form__label">{{ t('editor.ai.topic') }}</label>
+          <label class="ai-form__label">{{ t("editor.ai.topic") }}</label>
           <input
             v-model="aiTopic"
             class="ai-form__input"
@@ -208,7 +254,7 @@ function onImproveClick(action: ImproveAction): void {
         </div>
 
         <div class="ai-form__field">
-          <label class="ai-form__label">{{ t('editor.ai.tone') }}</label>
+          <label class="ai-form__label">{{ t("editor.ai.tone") }}</label>
           <div class="ai-form__chips">
             <button
               v-for="opt in toneOptions"
@@ -223,7 +269,7 @@ function onImproveClick(action: ImproveAction): void {
         </div>
 
         <div class="ai-form__field">
-          <label class="ai-form__label">{{ t('editor.ai.length') }}</label>
+          <label class="ai-form__label">{{ t("editor.ai.length") }}</label>
           <div class="ai-form__chips">
             <button
               v-for="opt in lengthOptions"
@@ -243,7 +289,7 @@ function onImproveClick(action: ImproveAction): void {
           :disabled="!aiTopic.trim()"
           @click="generateAi"
         >
-          {{ t('editor.ai.generate') }}
+          {{ t("editor.ai.generate") }}
         </AppButton>
       </div>
     </AppModal>
@@ -256,7 +302,11 @@ function onImproveClick(action: ImproveAction): void {
     />
 
     <!-- Tone modal -->
-    <AppModal v-if="showToneModal" :title="t('editor.ai.toneModal')" @close="showToneModal = false">
+    <AppModal
+      v-if="showToneModal"
+      :title="t('editor.ai.toneModal')"
+      @close="showToneModal = false"
+    >
       <div class="tone-form">
         <div class="tone-form__presets">
           <button
@@ -284,7 +334,7 @@ function onImproveClick(action: ImproveAction): void {
           :disabled="!improveTone.trim()"
           @click="runImprove('tone', improveTone)"
         >
-          {{ t('editor.ai.applyTone') }}
+          {{ t("editor.ai.applyTone") }}
         </AppButton>
       </div>
     </AppModal>
@@ -313,11 +363,11 @@ function onImproveClick(action: ImproveAction): void {
 }
 
 .post-editor__char-bar-count--warn {
-  color: #D97706;
+  color: #d97706;
 }
 
 .post-editor__char-bar-count--danger {
-  color: #DC2626;
+  color: #dc2626;
   font-weight: 600;
 }
 
@@ -342,7 +392,11 @@ function onImproveClick(action: ImproveAction): void {
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
-  background: linear-gradient(135deg, var(--fp-primary) 0%, var(--fp-primary-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--fp-primary) 0%,
+    var(--fp-primary-dark) 100%
+  );
   color: #fff;
   transition: all var(--fp-transition);
 }
@@ -359,8 +413,8 @@ function onImproveClick(action: ImproveAction): void {
 .ai-toolbar__lock-badge {
   font-size: 9px;
   font-weight: 800;
-  background: rgba(245,158,11,0.2);
-  color: #D97706;
+  background: rgba(245, 158, 11, 0.2);
+  color: #d97706;
   padding: 1px 5px;
   border-radius: 4px;
   letter-spacing: 0.5px;
@@ -570,6 +624,8 @@ function onImproveClick(action: ImproveAction): void {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

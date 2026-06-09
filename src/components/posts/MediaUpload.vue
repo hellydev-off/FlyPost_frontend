@@ -68,15 +68,15 @@ function addFiles(incoming: FileList | null): void {
   if (skippedLimit > 0) {
     toast.show(`Максимум ${MAX_FILES} файлов`, 'error')
   }
-  files.value.push(...valid)
-  emit('change', files.value)
+  files.value = [...files.value, ...valid]
+  emit('change', [...files.value])
 }
 
 function removeFile(i: number): void {
   if (previews.value[i].url) URL.revokeObjectURL(previews.value[i].url)
-  files.value.splice(i, 1)
+  files.value = files.value.filter((_, idx) => idx !== i)
   previews.value.splice(i, 1)
-  emit('change', files.value)
+  emit('change', [...files.value])
 }
 
 function onDrop(e: DragEvent): void {

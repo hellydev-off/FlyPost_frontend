@@ -57,6 +57,11 @@ function progressWidth(): number {
       <div class="ref-page__spinner" />
     </div>
 
+    <div v-else-if="store.error" class="ref-page__error">
+      <p>Не удалось загрузить данные</p>
+      <button class="ref-page__retry" @click="store.fetchStats()">Повторить</button>
+    </div>
+
     <template v-else-if="store.stats">
       <!-- Hero -->
       <div class="ref-page__hero">
@@ -165,6 +170,26 @@ function progressWidth(): number {
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.ref-page__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 60px 0;
+  color: var(--fp-text-secondary);
+  text-align: center;
+  font-size: 15px;
+}
+
+.ref-page__retry {
+  padding: 10px 24px;
+  border-radius: 20px;
+  background: var(--fp-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
 
 .ref-page__hero {
   text-align: center;
